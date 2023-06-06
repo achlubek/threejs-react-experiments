@@ -2,8 +2,15 @@ import * as THREE from "three";
 
 export function disposeObject3d(o3d: object): void {
   const disposeIfPossible = (target: object): void => {
-    const v = target as { dispose: unknown };
-    if (v.dispose && typeof v.dispose === "function") {
+    const v = target as {
+      dispose: unknown;
+      userData?: { noDispose?: boolean };
+    };
+    if (
+      v.dispose &&
+      typeof v.dispose === "function" &&
+      !v.userData?.noDispose
+    ) {
       v.dispose();
     }
   };
@@ -15,6 +22,7 @@ export function disposeObject3d(o3d: object): void {
       });
     }
     if (typeof v === "object") {
+      disposeObject3d(v!);
       disposeIfPossible(v!);
     }
   });
@@ -22,10 +30,12 @@ export function disposeObject3d(o3d: object): void {
 
 export function disposeScene(scene: THREE.Scene): void {
   scene.children.forEach((c) => {
-    if (c instanceof THREE.Scene) {
-      disposeScene(c);
-    } else {
-      disposeObject3d(c);
+    if (!c.userData.noDispose) {
+      if (c instanceof THREE.Scene) {
+        disposeScene(c);
+      } else {
+        disposeObject3d(c);
+      }
     }
   });
   scene.clear();
