@@ -35,6 +35,8 @@ export default function FragmentShaderView<
         fragmentShader: props.fragmentShader,
         depthWrite: false,
         depthTest: false,
+        blendEquationAlpha: THREE.NoBlending,
+        transparent: true,
       }),
     []
   );

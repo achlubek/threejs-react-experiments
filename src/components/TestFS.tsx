@@ -1,6 +1,6 @@
 import { ReactElement, useMemo } from "react";
 
-import * as THREE from "three";
+import { Vector2 } from "three";
 
 import { CanvasOnDrawParams } from "@app/components/Canvas";
 import FragmentShaderView from "@app/components/FragmentShaderView";
@@ -12,9 +12,11 @@ export default function TestFS(props: TestFSProps): ReactElement {
   const shader = `
     varying vec2 UV;
     uniform float time;
+    uniform vec2 resolution;
+    uniform float ratio;
 
     void main() {
-      vec4 C = vec4(UV.x, UV.y, sin(time), 1.0);
+      vec4 C = vec4(UV.x * ratio, UV.y, sin(time), smoothstep(0.0, 0.1, sin(time + UV.x * ratio * 40.0 + UV.y * 100.0)));
       gl_FragColor = C;
     }
   `;
@@ -22,12 +24,16 @@ export default function TestFS(props: TestFSProps): ReactElement {
   const uniforms = useMemo(
     () => ({
       time: { value: 0 },
+      resolution: { value: new Vector2(0, 0) },
+      ratio: { value: 1 },
     }),
     []
   );
 
   const onDraw = (params: CanvasOnDrawParams): typeof uniforms => {
     uniforms.time.value = params.clock.getElapsedTime();
+    uniforms.resolution.value = new Vector2(params.width, params.height);
+    uniforms.ratio.value = params.width / params.height;
     return uniforms;
   };
 

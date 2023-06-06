@@ -42,7 +42,7 @@ export default function Canvas(props: CanvasProps): ReactElement {
         divRef.current.clientWidth,
         divRef.current.clientHeight
       );
-      threeRenderer.toneMapping = THREE.NoToneMapping;
+      threeRenderer.toneMapping = THREE.ACESFilmicToneMapping;
       threeRenderer.outputColorSpace = "srgb";
       setRenderer(threeRenderer);
     }
