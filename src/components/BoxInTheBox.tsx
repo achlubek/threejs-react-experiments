@@ -4,6 +4,7 @@ import * as THREE from "three";
 import { Mesh } from "three";
 
 import bumpMap from "@app/assets/bumpmap.jpg";
+import { CanvasOnDrawParams } from "@app/components/Canvas";
 import OrbitCameraView from "@app/components/OrbitCameraView";
 import { useScene } from "@app/hooks/useScene";
 
@@ -41,12 +42,8 @@ export default function BoxInTheBox(props: BoxInTheBoxProps): ReactElement {
     scene.add(ambientLight);
   });
 
-  const onDraw = (
-    _c: THREE.Camera,
-    _s: THREE.Scene,
-    clock: THREE.Clock
-  ): void => {
-    scene.getObjectByName("BoxMesh")?.rotateZ(clock.getDelta() * 0.63);
+  const onDraw = (params: CanvasOnDrawParams): void => {
+    scene.getObjectByName("BoxMesh")?.rotateZ(params.clock.getDelta() * 0.63);
   };
 
   return (

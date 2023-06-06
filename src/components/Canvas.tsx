@@ -3,14 +3,18 @@ import { ReactElement, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { Vector2 } from "three";
 
+export interface CanvasOnDrawParams {
+  camera: THREE.Camera;
+  scene: THREE.Scene;
+  clock: THREE.Clock;
+  width: number;
+  height: number;
+}
+
 export interface CanvasProps {
   camera: THREE.Camera;
   scene: THREE.Scene;
-  onDraw: (
-    camera: THREE.Camera,
-    scene: THREE.Scene,
-    clock: THREE.Clock
-  ) => void;
+  onDraw: (params: CanvasOnDrawParams) => void;
   onResize: (width: number, height: number) => void;
   overlayRef: React.MutableRefObject<HTMLDivElement | null>;
   className?: string | undefined;
@@ -33,6 +37,7 @@ export default function Canvas(props: CanvasProps): ReactElement {
         alpha: true,
         stencil: false,
       });
+      console.log(divRef.current.clientWidth);
       threeRenderer.setSize(
         divRef.current.clientWidth,
         divRef.current.clientHeight
@@ -61,7 +66,13 @@ export default function Canvas(props: CanvasProps): ReactElement {
           onResize(divRef.current.clientWidth, divRef.current.clientHeight);
         }
         renderer.render(scene, camera);
-        onDraw(camera, scene, clock);
+        onDraw({
+          camera,
+          scene,
+          clock,
+          width: size.x,
+          height: size.y,
+        });
         if (!disposed) {
           requestAnimationFrame(() => renderLoop());
         }
@@ -74,13 +85,15 @@ export default function Canvas(props: CanvasProps): ReactElement {
   }, [canvasRef, divRef, renderer, scene, camera]);
 
   return (
-    <div ref={divRef} className={className}>
-      <div style={{ overflow: "visible", position: "relative" }}>
-        <canvas
-          ref={canvasRef}
-          style={{ position: "absolute", left: 0, top: 0 }}
-        ></canvas>
-      </div>
+    <div
+      ref={divRef}
+      className={className}
+      style={{ overflow: "visible", position: "relative" }}
+    >
+      <canvas
+        ref={canvasRef}
+        style={{ position: "absolute", left: 0, top: 0 }}
+      ></canvas>
     </div>
   );
 }

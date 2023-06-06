@@ -17,6 +17,7 @@ export const globalStyle = createGlobalStyle`
     border: 1px solid #888;
     background-color: #BBB;
     cursor: pointer;
+    user-select: none;
     &:hover {
       background-color: #CCC;
     }

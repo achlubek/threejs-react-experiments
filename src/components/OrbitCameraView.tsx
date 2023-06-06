@@ -4,15 +4,11 @@ import * as THREE from "three";
 import { PerspectiveCamera, Vector3 } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
-import Canvas from "@app/components/Canvas";
+import Canvas, { CanvasOnDrawParams } from "@app/components/Canvas";
 
 export interface OrbitCameraViewProps {
   className?: string | undefined;
-  onDraw: (
-    camera: THREE.Camera,
-    scene: THREE.Scene,
-    clock: THREE.Clock
-  ) => void;
+  onDraw: (params: CanvasOnDrawParams) => void;
   scene: THREE.Scene;
 }
 
@@ -57,13 +53,9 @@ export default function OrbitCameraView(
     return null;
   }, [elementRef, elementRef.current === null, camera]);
 
-  const onDraw = (
-    camera: THREE.Camera,
-    scene: THREE.Scene,
-    clock: THREE.Clock
-  ): void => {
+  const onDraw = (params: CanvasOnDrawParams): void => {
     controls?.update();
-    props.onDraw(camera, scene, clock);
+    props.onDraw(params);
   };
 
   return (
