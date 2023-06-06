@@ -12,7 +12,7 @@ export const useScene = (init: (scene: THREE.Scene) => void): THREE.Scene => {
     init(s);
     setScene(s);
     return () => {
-      disposeScene(scene);
+      disposeScene(s);
       setScene(new THREE.Scene());
     };
   }, []);

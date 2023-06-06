@@ -1,7 +1,7 @@
 import { ReactElement, useEffect, useMemo, useRef, useState } from "react";
 
 import * as THREE from "three";
-import { Matrix4, PerspectiveCamera, Vector3 } from "three";
+import { PerspectiveCamera, Vector3 } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 import Canvas from "@app/components/Canvas";

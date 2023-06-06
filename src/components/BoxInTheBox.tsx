@@ -3,6 +3,7 @@ import { ReactElement } from "react";
 import * as THREE from "three";
 import { Mesh } from "three";
 
+import bumpMap from "@app/assets/bumpmap.jpg";
 import OrbitCameraView from "@app/components/OrbitCameraView";
 import { useScene } from "@app/hooks/useScene";
 
@@ -14,14 +15,30 @@ export interface BoxInTheBoxProps {
 export default function BoxInTheBox(props: BoxInTheBoxProps): ReactElement {
   const scene = useScene((scene: THREE.Scene) => {
     const boxGeo = new THREE.BoxGeometry();
-    const boxMat = new THREE.MeshPhysicalMaterial({ color: props.color });
+    boxGeo.name = "BoxGeo";
+
+    const tex = new THREE.TextureLoader().load(bumpMap);
+    tex.name = "BumpTex";
+
+    const boxMat = new THREE.MeshPhysicalMaterial({
+      color: props.color,
+      roughnessMap: tex,
+    });
+    boxMat.name = "BoxMat";
+
     const box = new Mesh(boxGeo, boxMat);
-    box.name = "box1";
+    box.name = "BoxMesh";
     scene.add(box);
-    scene.add(
-      new THREE.PointLight("white", 12.0, 11, 0).translateZ(5.0).translateX(5.0)
-    );
-    scene.add(new THREE.AmbientLight("white", 0.2));
+
+    const pointLight = new THREE.PointLight("white", 12.0, 11, 0)
+      .translateZ(5.0)
+      .translateX(5.0);
+    pointLight.name = "PointLight";
+    scene.add(pointLight);
+
+    const ambientLight = new THREE.AmbientLight("white", 0.2);
+    ambientLight.name = "AmbientLight";
+    scene.add(ambientLight);
   });
 
   const onDraw = (
@@ -29,7 +46,7 @@ export default function BoxInTheBox(props: BoxInTheBoxProps): ReactElement {
     _s: THREE.Scene,
     clock: THREE.Clock
   ): void => {
-    scene.getObjectByName("box1")?.rotateZ(clock.getDelta() * 0.63);
+    scene.getObjectByName("BoxMesh")?.rotateZ(clock.getDelta() * 0.63);
   };
 
   return (

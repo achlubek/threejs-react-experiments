@@ -1,17 +1,32 @@
 import * as THREE from "three";
 
-export function disposeObject3d(o3d: object): void {
-  const disposeIfPossible = (target: object): void => {
+export function disposeObject3d(o3d: object | null): void {
+  if (o3d === null) {
+    return;
+  }
+  const disposeIfPossible = (target: object | null): void => {
+    if (target === null) {
+      return;
+    }
     const v = target as {
       dispose: unknown;
-      userData?: { noDispose?: boolean };
+      userData?: { noDispose?: boolean; disposed?: boolean };
+      name?: string;
     };
     if (
       v.dispose &&
       typeof v.dispose === "function" &&
-      !v.userData?.noDispose
+      !v.userData?.noDispose &&
+      !v.userData?.disposed
     ) {
       v.dispose();
+      if (!v.userData) {
+        v.userData = { disposed: true };
+      }
+      v.userData.disposed = true;
+      console.log(
+        `Disposed ${v.constructor.name} with name "${v.name ?? "undefined"}"`
+      );
     }
   };
   Object.keys(o3d).forEach((key) => {
@@ -21,9 +36,13 @@ export function disposeObject3d(o3d: object): void {
         disposeIfPossible(a as object);
       });
     }
-    if (typeof v === "object") {
-      disposeObject3d(v!);
-      disposeIfPossible(v!);
+    if (typeof v === "object" && v !== o3d) {
+      if (v instanceof THREE.Scene) {
+        //disposeScene(v);
+      } else {
+        disposeObject3d(v);
+      }
+      disposeIfPossible(v);
     }
   });
 }
