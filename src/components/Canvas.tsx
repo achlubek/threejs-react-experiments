@@ -30,7 +30,7 @@ export default function Canvas(props: CanvasProps): ReactElement {
         depth: true,
         antialias: true,
         logarithmicDepthBuffer: true,
-        alpha: false,
+        alpha: true,
         stencil: false,
       });
       threeRenderer.setSize(

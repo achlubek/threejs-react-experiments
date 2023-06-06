@@ -1,23 +1,24 @@
 import { createGlobalStyle } from "styled-components";
 
-import { consts } from "@app/styles/consts";
-
 export const globalStyle = createGlobalStyle`
   body {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    background-color: ${consts.colors.darkLead};
+    background-color: #BBBBBB;
     font-family: Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-    color: ${consts.colors.white};
+    color: #222;
   }
-  a {
-     text-decoration: none;
-  }
-  input {
-    all: unset;
-  }
+
   button {
     all: unset;
+    padding: 4px;
+    border-radius: 4px;
+    border: 1px solid #888;
+    background-color: #BBB;
+    cursor: pointer;
+    &:hover {
+      background-color: #CCC;
+    }
   }
 `;
