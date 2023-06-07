@@ -11,9 +11,9 @@ import { useScene } from "@app/hooks/useScene";
 
 export interface CameraViewProps<UniType extends Record<string, THREE.IUniform>>
   extends UseCanvasRendererPropsBase {
-  onDraw: (params: CanvasOnDrawParams) => UniType;
+  onDraw?: ((params: CanvasOnDrawParams) => UniType) | undefined;
   fragmentShader: string;
-  uniforms: UniType;
+  uniforms?: UniType | undefined;
 }
 
 export default function useFragmentShaderView<
@@ -52,7 +52,9 @@ export default function useFragmentShaderView<
   });
 
   const onDraw = (params: CanvasOnDrawParams): void => {
-    mat.uniforms = props.onDraw(params);
+    if (props.onDraw) {
+      mat.uniforms = props.onDraw(params);
+    }
   };
 
   const camera = useMemo(
@@ -61,9 +63,11 @@ export default function useFragmentShaderView<
   );
 
   return useCanvasRenderer({
+    ...props,
     elementClassName: props.elementClassName,
     scene,
     camera,
     onDraw,
+    toneMapping: THREE.NoToneMapping,
   });
 }

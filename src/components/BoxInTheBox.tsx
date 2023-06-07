@@ -4,7 +4,10 @@ import * as THREE from "three";
 import { Mesh, MeshPhysicalMaterial } from "three";
 
 import bumpMap from "@app/assets/bumpmap.jpg";
-import { CanvasOnDrawParams } from "@app/hooks/useCanvasRenderer";
+import {
+  CanvasOnDrawParams,
+  CanvasRendererMouseEventParams,
+} from "@app/hooks/useCanvasRenderer";
 import useOrbitCameraView from "@app/hooks/useOrbitCameraView";
 import { useScene } from "@app/hooks/useScene";
 
@@ -52,14 +55,14 @@ export default function BoxInTheBox(props: BoxInTheBoxProps): ReactElement {
     elementClassName: props.className,
     scene,
     onDraw,
-    onMouseDown: (x: number, y: number, intersects: THREE.Intersection[]) => {
+    onMouseDown: (event: CanvasRendererMouseEventParams): void => {
       // eslint-disable-next-line no-console
-      console.log({ x, y, intersects });
+      console.log(event);
     },
-    onMouseMove: (_x: number, _y: number, intersects: THREE.Intersection[]) => {
+    onMouseMove: (event: CanvasRendererMouseEventParams) => {
       const boxMesh = scene.getObjectByName("BoxMesh") as Mesh;
       const material = boxMesh.material as MeshPhysicalMaterial;
-      if (intersects.map((a) => a.object.name).includes("BoxMesh")) {
+      if (event.intersects.map((a) => a.object.name).includes("BoxMesh")) {
         material.color = new THREE.Color("white");
       } else {
         material.color = new THREE.Color(props.color);

@@ -16,18 +16,38 @@ export interface CanvasOnDrawParams {
   height: number;
 }
 
+export interface CanvasRendererPosition {
+  x: number;
+  y: number;
+}
+
+export interface CanvasRendererMouseEventParams {
+  position: CanvasRendererPosition;
+  intersects: THREE.Intersection[];
+  rayDirection: THREE.Vector3;
+}
+
+export type UseCanvasRendererMouseEventHandler = (
+  event: CanvasRendererMouseEventParams
+) => void;
+
+export type TouchEventParams = CanvasRendererMouseEventParams[];
+
+export type UseCanvasRendererMultiTouchEventHandler = (
+  event: TouchEventParams
+) => void;
+
 export interface UseCanvasRendererEvents {
   onDraw?: ((params: CanvasOnDrawParams) => void) | undefined;
   onResize?: ((width: number, height: number) => void) | undefined;
-  onMouseMove?:
-    | ((x: number, y: number, intersects: THREE.Intersection[]) => void)
-    | undefined;
-  onMouseDown?:
-    | ((x: number, y: number, intersects: THREE.Intersection[]) => void)
-    | undefined;
-  onMouseUp?:
-    | ((x: number, y: number, intersects: THREE.Intersection[]) => void)
-    | undefined;
+  onMouseMove?: UseCanvasRendererMouseEventHandler | undefined;
+  onMouseDown?: UseCanvasRendererMouseEventHandler | undefined;
+  onMouseUp?: UseCanvasRendererMouseEventHandler | undefined;
+  onMouseEnter?: UseCanvasRendererMouseEventHandler | undefined;
+  onMouseLeave?: UseCanvasRendererMouseEventHandler | undefined;
+  onTouchMove?: UseCanvasRendererMultiTouchEventHandler | undefined;
+  onTouchStart?: UseCanvasRendererMultiTouchEventHandler | undefined;
+  onTouchEnd?: UseCanvasRendererMultiTouchEventHandler | undefined;
 }
 
 export interface UseCanvasRendererPropsBase extends UseCanvasRendererEvents {
@@ -37,6 +57,7 @@ export interface UseCanvasRendererPropsBase extends UseCanvasRendererEvents {
 export interface UseCanvasRendererProps extends UseCanvasRendererPropsBase {
   camera: THREE.Camera;
   scene: THREE.Scene;
+  toneMapping?: THREE.ToneMapping | undefined;
 }
 
 export interface CanvasRenderer {
@@ -71,7 +92,8 @@ export default function useCanvasRenderer(
         overlayRef.current.clientWidth,
         overlayRef.current.clientHeight
       );
-      threeRenderer.toneMapping = THREE.ACESFilmicToneMapping;
+      threeRenderer.toneMapping =
+        props.toneMapping ?? THREE.ACESFilmicToneMapping;
       threeRenderer.outputColorSpace = "srgb";
       setRenderer(threeRenderer);
     }
@@ -80,7 +102,7 @@ export default function useCanvasRenderer(
   const calculateNormalizedMouseCoords = (
     clientX: number,
     clientY: number
-  ): { x: number; y: number } => {
+  ): CanvasRendererPosition => {
     if (canvasRef.current) {
       const bbox = canvasRef.current.getBoundingClientRect();
       const xAbs = clientX - bbox.left;
@@ -92,10 +114,9 @@ export default function useCanvasRenderer(
     return { x: 0, y: 0 };
   };
 
-  const calculateNDCMouseCoords = (normalized: {
-    x: number;
-    y: number;
-  }): THREE.Vector2 => {
+  const calculateNDCMouseCoords = (
+    normalized: CanvasRendererPosition
+  ): THREE.Vector2 => {
     if (canvasRef.current) {
       const xSnorm = normalized.x * 2 - 1;
       const ySnorm = -normalized.y * 2 + 1;
@@ -110,60 +131,40 @@ export default function useCanvasRenderer(
     return raycaster.intersectObjects(props.scene.children);
   };
 
-  const onMouseMove = (e: React.MouseEvent): void => {
-    e.preventDefault();
-    if (canvasRef.current && props.onMouseMove) {
-      const norm = calculateNormalizedMouseCoords(e.clientX, e.clientY);
-      const intersects = getIntersections(calculateNDCMouseCoords(norm));
-      props.onMouseMove(norm.x, norm.y, intersects);
+  const handleMouseEvent = (
+    e: React.MouseEvent,
+    handler: ((event: CanvasRendererMouseEventParams) => void) | undefined
+  ): void => {
+    if (handler && canvasRef.current) {
+      e.preventDefault();
+      const position = calculateNormalizedMouseCoords(e.clientX, e.clientY);
+      const intersects = getIntersections(calculateNDCMouseCoords(position));
+      handler({
+        position,
+        intersects,
+        rayDirection: raycaster.ray.direction,
+      });
     }
   };
 
-  const onMouseDown = (e: React.MouseEvent): void => {
-    e.preventDefault();
-    if (canvasRef.current && props.onMouseDown) {
-      const norm = calculateNormalizedMouseCoords(e.clientX, e.clientY);
-      const intersects = getIntersections(calculateNDCMouseCoords(norm));
-      props.onMouseDown(norm.x, norm.y, intersects);
-    }
-  };
-
-  const onMouseUp = (e: React.MouseEvent): void => {
-    e.preventDefault();
-    if (canvasRef.current && props.onMouseUp) {
-      const norm = calculateNormalizedMouseCoords(e.clientX, e.clientY);
-      const intersects = getIntersections(calculateNDCMouseCoords(norm));
-      props.onMouseUp(norm.x, norm.y, intersects);
-    }
-  };
-
-  const onTouchMove = (e: React.TouchEvent): void => {
-    e.preventDefault();
-    if (e.touches.length > 0 && canvasRef.current && props.onMouseMove) {
-      const t = e.touches.item(0);
-      const norm = calculateNormalizedMouseCoords(t.clientX, t.clientY);
-      const intersects = getIntersections(calculateNDCMouseCoords(norm));
-      props.onMouseMove(norm.x, norm.y, intersects);
-    }
-  };
-
-  const onTouchStart = (e: React.TouchEvent): void => {
-    e.preventDefault();
-    if (e.touches.length > 0 && canvasRef.current && props.onMouseDown) {
-      const t = e.touches.item(0);
-      const norm = calculateNormalizedMouseCoords(t.clientX, t.clientY);
-      const intersects = getIntersections(calculateNDCMouseCoords(norm));
-      props.onMouseDown(norm.x, norm.y, intersects);
-    }
-  };
-
-  const onTouchEnd = (e: React.TouchEvent): void => {
-    e.preventDefault();
-    if (e.touches.length > 0 && canvasRef.current && props.onMouseUp) {
-      const t = e.touches.item(0);
-      const norm = calculateNormalizedMouseCoords(t.clientX, t.clientY);
-      const intersects = getIntersections(calculateNDCMouseCoords(norm));
-      props.onMouseUp(norm.x, norm.y, intersects);
+  const handleTouchEvent = (
+    e: React.TouchEvent,
+    handler: ((event: TouchEventParams) => void) | undefined
+  ): void => {
+    if (handler && canvasRef.current) {
+      e.preventDefault();
+      const touches: CanvasRendererMouseEventParams[] = [];
+      for (let i = 0; i < e.touches.length; i++) {
+        const t = e.touches.item(i);
+        const position = calculateNormalizedMouseCoords(t.clientX, t.clientY);
+        const intersects = getIntersections(calculateNDCMouseCoords(position));
+        touches.push({
+          position,
+          intersects,
+          rayDirection: raycaster.ray.direction,
+        });
+      }
+      handler(touches);
     }
   };
 
@@ -171,18 +172,17 @@ export default function useCanvasRenderer(
     <div
       ref={overlayRef}
       className={props.elementClassName}
-      onMouseMove={onMouseMove}
-      onMouseDown={onMouseDown}
-      onMouseUp={onMouseUp}
-      onTouchMove={onTouchMove}
-      onTouchStart={onTouchStart}
-      onTouchEnd={onTouchEnd}
-      style={{ overflow: "visible", position: "relative" }}
+      onMouseMove={(e) => handleMouseEvent(e, props.onMouseMove)}
+      onMouseDown={(e) => handleMouseEvent(e, props.onMouseDown)}
+      onMouseUp={(e) => handleMouseEvent(e, props.onMouseUp)}
+      onMouseEnter={(e) => handleMouseEvent(e, props.onMouseEnter)}
+      onMouseLeave={(e) => handleMouseEvent(e, props.onMouseLeave)}
+      onTouchMove={(e) => handleTouchEvent(e, props.onTouchMove)}
+      onTouchStart={(e) => handleTouchEvent(e, props.onTouchStart)}
+      onTouchEnd={(e) => handleTouchEvent(e, props.onTouchEnd)}
+      style={{ overflow: "hidden", position: "relative" }}
     >
-      <canvas
-        ref={canvasRef}
-        style={{ position: "absolute", left: 0, top: 0 }}
-      ></canvas>
+      <canvas ref={canvasRef} style={{ display: "block" }}></canvas>
     </div>
   );
 
