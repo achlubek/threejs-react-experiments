@@ -2,8 +2,8 @@ import { ReactElement, useMemo } from "react";
 
 import { Vector2 } from "three";
 
-import FragmentShaderView from "@app/components/FragmentShaderView";
 import { CanvasOnDrawParams } from "@app/hooks/useCanvasRenderer";
+import useFragmentShaderView from "@app/hooks/useFragmentShaderView";
 
 export interface TestFSProps {
   className?: string | undefined;
@@ -37,12 +37,12 @@ export default function TestFS(props: TestFSProps): ReactElement {
     return uniforms;
   };
 
-  return (
-    <FragmentShaderView
-      className={props.className}
-      onDraw={onDraw}
-      fragmentShader={shader}
-      uniforms={uniforms}
-    />
-  );
+  const fragmentShaderView = useFragmentShaderView({
+    uniforms,
+    fragmentShader: shader,
+    elementClassName: props.className,
+    onDraw,
+  });
+
+  return fragmentShaderView.element;
 }

@@ -11,6 +11,7 @@ import { Vector2 } from "three";
 
 export interface CanvasOnDrawParams {
   canvasRenderer: CanvasRenderer;
+  canvas: HTMLCanvasElement;
   width: number;
   height: number;
 }
@@ -30,18 +31,18 @@ export interface CanvasRenderer {
   element: ReactElement;
   scene: THREE.Scene;
   camera: THREE.Camera;
+  overlayRef: React.MutableRefObject<HTMLDivElement | null>;
 }
 
 export default function useCanvasRenderer(props: CanvasProps): CanvasRenderer {
-  const { elementClassName, camera, scene, onDraw, onResize, overlayRef } =
-    props;
-  const divRef = overlayRef;
+  const { elementClassName, camera, scene, onDraw, onResize } = props;
+  const overlayRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [renderer, setRenderer] = useState<THREE.WebGLRenderer | null>(null);
   const clock = useMemo(() => new THREE.Clock(), []);
 
   useEffect(() => {
-    if (canvasRef.current && divRef.current) {
+    if (canvasRef.current && overlayRef.current) {
       const threeRenderer = new THREE.WebGLRenderer({
         canvas: canvasRef.current,
         depth: true,
@@ -51,18 +52,18 @@ export default function useCanvasRenderer(props: CanvasProps): CanvasRenderer {
         stencil: false,
       });
       threeRenderer.setSize(
-        divRef.current.clientWidth,
-        divRef.current.clientHeight
+        overlayRef.current.clientWidth,
+        overlayRef.current.clientHeight
       );
       threeRenderer.toneMapping = THREE.ACESFilmicToneMapping;
       threeRenderer.outputColorSpace = "srgb";
       setRenderer(threeRenderer);
     }
-  }, [canvasRef, canvasRef.current, divRef, divRef.current]);
+  }, [canvasRef, canvasRef.current, overlayRef, overlayRef.current]);
 
   const element = (
     <div
-      ref={divRef}
+      ref={overlayRef}
       className={elementClassName}
       style={{ overflow: "visible", position: "relative" }}
     >
@@ -79,6 +80,7 @@ export default function useCanvasRenderer(props: CanvasProps): CanvasRenderer {
     camera,
     clock,
     renderer,
+    overlayRef,
   };
 
   useEffect(() => {
@@ -88,22 +90,28 @@ export default function useCanvasRenderer(props: CanvasProps): CanvasRenderer {
         let size = new Vector2(0, 0);
         size = renderer.getSize(size);
         if (
-          divRef.current &&
-          (size.x !== divRef.current.clientWidth ||
-            size.y !== divRef.current.clientHeight)
+          overlayRef.current &&
+          (size.x !== overlayRef.current.clientWidth ||
+            size.y !== overlayRef.current.clientHeight)
         ) {
           renderer.setSize(
-            divRef.current.clientWidth,
-            divRef.current.clientHeight
+            overlayRef.current.clientWidth,
+            overlayRef.current.clientHeight
           );
-          onResize(divRef.current.clientWidth, divRef.current.clientHeight);
+          onResize(
+            overlayRef.current.clientWidth,
+            overlayRef.current.clientHeight
+          );
         }
         renderer.render(scene, camera);
-        onDraw({
-          canvasRenderer,
-          width: size.x,
-          height: size.y,
-        });
+        if (canvasRef.current) {
+          onDraw({
+            canvasRenderer,
+            width: size.x,
+            height: size.y,
+            canvas: canvasRef.current,
+          });
+        }
         if (!disposed) {
           requestAnimationFrame(() => renderLoop());
         }
@@ -113,7 +121,7 @@ export default function useCanvasRenderer(props: CanvasProps): CanvasRenderer {
     return () => {
       disposed = true;
     };
-  }, [canvasRef, divRef, renderer, scene, camera]);
+  }, [canvasRef, overlayRef, renderer, scene, camera]);
 
   return canvasRenderer;
 }

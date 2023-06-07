@@ -1,24 +1,25 @@
-import { ReactElement, useMemo, useRef } from "react";
+import { useMemo, useRef } from "react";
 
 import * as THREE from "three";
 
 import useCanvasRenderer, {
   CanvasOnDrawParams,
+  CanvasRenderer,
 } from "@app/hooks/useCanvasRenderer";
 import { useScene } from "@app/hooks/useScene";
 
 export interface CameraViewProps<
   UniType extends Record<string, THREE.IUniform>
 > {
-  className?: string | undefined;
+  elementClassName?: string | undefined;
   onDraw: (params: CanvasOnDrawParams) => UniType;
   fragmentShader: string;
   uniforms: UniType;
 }
 
-export default function FragmentShaderView<
+export default function useFragmentShaderView<
   UniType extends Record<string, THREE.IUniform>
->(props: CameraViewProps<UniType>): ReactElement {
+>(props: CameraViewProps<UniType>): CanvasRenderer {
   const elementRef = useRef<HTMLDivElement | null>(null);
   const vertexShader = `
     varying vec2 UV;
@@ -62,7 +63,7 @@ export default function FragmentShaderView<
   );
 
   const canvasRenderer = useCanvasRenderer({
-    elementClassName: props.className,
+    elementClassName: props.elementClassName,
     overlayRef: elementRef,
     scene,
     camera,
@@ -72,5 +73,5 @@ export default function FragmentShaderView<
     },
   });
 
-  return canvasRenderer.element;
+  return canvasRenderer;
 }
