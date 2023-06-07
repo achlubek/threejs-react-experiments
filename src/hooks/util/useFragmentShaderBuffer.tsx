@@ -2,24 +2,23 @@ import { useMemo } from "react";
 
 import * as THREE from "three";
 
-import useCanvasRenderer, {
-  CanvasOnDrawParams,
-  CanvasRenderer,
-  UseCanvasRendererPropsBase,
-} from "@app/hooks/useCanvasRenderer";
-import { useScene } from "@app/hooks/useScene";
+import useBufferRenderer, {
+  BufferOnDrawParams,
+  BufferRenderer,
+  UseBufferRendererPropsBase,
+} from "@app/hooks/render/useBufferRenderer";
+import { useScene } from "@app/hooks/util/useScene";
 
-export interface FragmentShaderViewProps<
-  UniType extends Record<string, THREE.IUniform>
-> extends UseCanvasRendererPropsBase {
-  onDraw?: ((params: CanvasOnDrawParams) => UniType) | undefined;
+export interface CameraViewProps<UniType extends Record<string, THREE.IUniform>>
+  extends UseBufferRendererPropsBase {
+  onDraw?: ((params: BufferOnDrawParams) => UniType) | undefined;
   fragmentShader: string;
   uniforms?: UniType | undefined;
 }
 
-export default function useFragmentShaderView<
+export default function useFragmentShaderBuffer<
   UniType extends Record<string, THREE.IUniform>
->(props: FragmentShaderViewProps<UniType>): CanvasRenderer {
+>(props: CameraViewProps<UniType>): BufferRenderer {
   const vertexShader = `
     varying vec2 UV;
 
@@ -52,7 +51,7 @@ export default function useFragmentShaderView<
     s.add(quad);
   });
 
-  const onDraw = (params: CanvasOnDrawParams): void => {
+  const onDraw = (params: BufferOnDrawParams): void => {
     if (props.onDraw) {
       mat.uniforms = props.onDraw(params);
     }
@@ -63,9 +62,8 @@ export default function useFragmentShaderView<
     []
   );
 
-  return useCanvasRenderer({
+  return useBufferRenderer({
     ...props,
-    elementClassName: props.elementClassName,
     scene,
     camera,
     onDraw,

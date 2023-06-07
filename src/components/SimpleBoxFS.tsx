@@ -2,11 +2,11 @@ import { ReactElement, useEffect, useMemo } from "react";
 
 import * as THREE from "three";
 
-import { BufferOnDrawParams } from "@app/hooks/useBufferRenderer";
-import { CanvasOnDrawParams } from "@app/hooks/useCanvasRenderer";
-import useFragmentShaderBuffer from "@app/hooks/useFragmentShaderBuffer";
-import useFragmentShaderView from "@app/hooks/useFragmentShaderView";
-import useRenderer from "@app/hooks/useRenderer";
+import { BufferOnDrawParams } from "@app/hooks/render/useBufferRenderer";
+import { CanvasOnDrawParams } from "@app/hooks/render/useCanvasRenderer";
+import useRenderer from "@app/hooks/render/useRenderer";
+import useFragmentShaderBuffer from "@app/hooks/util/useFragmentShaderBuffer";
+import useFragmentShaderView from "@app/hooks/util/useFragmentShaderView";
 
 export interface SimpleBoxFSProps {
   className?: string | undefined;

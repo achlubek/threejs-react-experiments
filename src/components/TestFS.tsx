@@ -2,9 +2,9 @@ import { ReactElement, useMemo } from "react";
 
 import { Vector2 } from "three";
 
-import { CanvasOnDrawParams } from "@app/hooks/useCanvasRenderer";
-import useFragmentShaderView from "@app/hooks/useFragmentShaderView";
-import useRenderer from "@app/hooks/useRenderer";
+import { CanvasOnDrawParams } from "@app/hooks/render/useCanvasRenderer";
+import useRenderer from "@app/hooks/render/useRenderer";
+import useFragmentShaderView from "@app/hooks/util/useFragmentShaderView";
 
 export interface TestFSProps {
   className?: string | undefined;

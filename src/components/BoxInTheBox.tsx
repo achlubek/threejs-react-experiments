@@ -7,10 +7,10 @@ import bumpMap from "@app/assets/bumpmap.jpg";
 import {
   CanvasOnDrawParams,
   CanvasRendererMouseEventParams,
-} from "@app/hooks/useCanvasRenderer";
-import useOrbitCameraView from "@app/hooks/useOrbitCameraView";
-import useRenderer from "@app/hooks/useRenderer";
-import { useScene } from "@app/hooks/useScene";
+} from "@app/hooks/render/useCanvasRenderer";
+import useRenderer from "@app/hooks/render/useRenderer";
+import useOrbitCameraView from "@app/hooks/util/useOrbitCameraView";
+import { useScene } from "@app/hooks/util/useScene";
 
 export interface BoxInTheBoxProps {
   color: THREE.ColorRepresentation;

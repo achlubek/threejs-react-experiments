@@ -4,12 +4,12 @@ import * as THREE from "three";
 import { Vector3 } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
-import useCameraView from "@app/hooks/useCameraView";
 import {
   CanvasOnDrawParams,
   CanvasRenderer,
   UseCanvasRendererPropsBase,
-} from "@app/hooks/useCanvasRenderer";
+} from "@app/hooks/render/useCanvasRenderer";
+import useCameraView from "@app/hooks/util/useCameraView";
 
 export interface UseOrbitCameraViewProps extends UseCanvasRendererPropsBase {
   scene: THREE.Scene;
