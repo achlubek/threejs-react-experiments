@@ -96,7 +96,11 @@ export default function useCanvasRenderer(
         props.toneMapping ?? THREE.ACESFilmicToneMapping;
       threeRenderer.outputColorSpace = "srgb";
       setRenderer(threeRenderer);
+      return () => {
+        threeRenderer.dispose();
+      };
     }
+    return undefined;
   }, [canvasRef, canvasRef.current, overlayRef, overlayRef.current]);
 
   const calculateNormalizedMouseCoords = (
@@ -217,7 +221,6 @@ export default function useCanvasRenderer(
             );
           }
         }
-        renderer.render(props.scene, props.camera);
         if (canvasRef.current && props.onDraw) {
           props.onDraw({
             canvasRenderer,
@@ -226,6 +229,7 @@ export default function useCanvasRenderer(
             canvas: canvasRef.current,
           });
         }
+        renderer.render(props.scene, props.camera);
         if (!disposed) {
           requestAnimationFrame(() => renderLoop());
         }
