@@ -2,7 +2,9 @@ import { ReactElement, useMemo, useRef } from "react";
 
 import * as THREE from "three";
 
-import Canvas, { CanvasOnDrawParams } from "@app/components/Canvas";
+import useCanvasRenderer, {
+  CanvasOnDrawParams,
+} from "@app/hooks/useCanvasRenderer";
 import { useScene } from "@app/hooks/useScene";
 
 export interface CameraViewProps<
@@ -59,16 +61,16 @@ export default function FragmentShaderView<
     []
   );
 
-  return (
-    <Canvas
-      className={props.className}
-      overlayRef={elementRef}
-      scene={scene}
-      camera={camera}
-      onDraw={onDraw}
-      onResize={() => {
-        /**/
-      }}
-    />
-  );
+  const canvasRenderer = useCanvasRenderer({
+    elementClassName: props.className,
+    overlayRef: elementRef,
+    scene,
+    camera,
+    onDraw,
+    onResize: () => {
+      /**/
+    },
+  });
+
+  return canvasRenderer.element;
 }

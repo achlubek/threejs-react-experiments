@@ -1,12 +1,16 @@
-import { ReactElement, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  ReactElement,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import * as THREE from "three";
 import { Vector2 } from "three";
 
 export interface CanvasOnDrawParams {
-  camera: THREE.Camera;
-  scene: THREE.Scene;
-  clock: THREE.Clock;
+  canvasRenderer: CanvasRenderer;
   width: number;
   height: number;
 }
@@ -17,12 +21,20 @@ export interface CanvasProps {
   onDraw: (params: CanvasOnDrawParams) => void;
   onResize: (width: number, height: number) => void;
   overlayRef: React.MutableRefObject<HTMLDivElement | null>;
-  className?: string | undefined;
+  elementClassName?: string | undefined;
 }
 
-// Instead of component, make this a hook, that returns stuff and the canvas component as well!
-export default function Canvas(props: CanvasProps): ReactElement {
-  const { className, camera, scene, onDraw, onResize, overlayRef } = props;
+export interface CanvasRenderer {
+  renderer: THREE.WebGLRenderer | null;
+  clock: THREE.Clock;
+  element: ReactElement;
+  scene: THREE.Scene;
+  camera: THREE.Camera;
+}
+
+export default function useCanvasRenderer(props: CanvasProps): CanvasRenderer {
+  const { elementClassName, camera, scene, onDraw, onResize, overlayRef } =
+    props;
   const divRef = overlayRef;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [renderer, setRenderer] = useState<THREE.WebGLRenderer | null>(null);
@@ -46,7 +58,28 @@ export default function Canvas(props: CanvasProps): ReactElement {
       threeRenderer.outputColorSpace = "srgb";
       setRenderer(threeRenderer);
     }
-  }, [canvasRef, divRef]);
+  }, [canvasRef, canvasRef.current, divRef, divRef.current]);
+
+  const element = (
+    <div
+      ref={divRef}
+      className={elementClassName}
+      style={{ overflow: "visible", position: "relative" }}
+    >
+      <canvas
+        ref={canvasRef}
+        style={{ position: "absolute", left: 0, top: 0 }}
+      ></canvas>
+    </div>
+  );
+
+  const canvasRenderer = {
+    element,
+    scene,
+    camera,
+    clock,
+    renderer,
+  };
 
   useEffect(() => {
     let disposed = false;
@@ -67,9 +100,7 @@ export default function Canvas(props: CanvasProps): ReactElement {
         }
         renderer.render(scene, camera);
         onDraw({
-          camera,
-          scene,
-          clock,
+          canvasRenderer,
           width: size.x,
           height: size.y,
         });
@@ -84,16 +115,5 @@ export default function Canvas(props: CanvasProps): ReactElement {
     };
   }, [canvasRef, divRef, renderer, scene, camera]);
 
-  return (
-    <div
-      ref={divRef}
-      className={className}
-      style={{ overflow: "visible", position: "relative" }}
-    >
-      <canvas
-        ref={canvasRef}
-        style={{ position: "absolute", left: 0, top: 0 }}
-      ></canvas>
-    </div>
-  );
+  return canvasRenderer;
 }

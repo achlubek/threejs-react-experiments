@@ -4,7 +4,9 @@ import * as THREE from "three";
 import { PerspectiveCamera, Vector3 } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
-import Canvas, { CanvasOnDrawParams } from "@app/components/Canvas";
+import useCanvasRenderer, {
+  CanvasOnDrawParams,
+} from "@app/hooks/useCanvasRenderer";
 
 export interface OrbitCameraViewProps {
   className?: string | undefined;
@@ -58,14 +60,14 @@ export default function OrbitCameraView(
     props.onDraw(params);
   };
 
-  return (
-    <Canvas
-      className={props.className}
-      overlayRef={elementRef}
-      scene={props.scene}
-      camera={camera}
-      onDraw={onDraw}
-      onResize={() => recalculateCameraAspect()}
-    />
-  );
+  const canvasRenderer = useCanvasRenderer({
+    elementClassName: props.className,
+    overlayRef: elementRef,
+    scene: props.scene,
+    camera,
+    onDraw,
+    onResize: () => recalculateCameraAspect(),
+  });
+
+  return canvasRenderer.element;
 }

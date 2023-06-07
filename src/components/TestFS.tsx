@@ -2,8 +2,8 @@ import { ReactElement, useMemo } from "react";
 
 import { Vector2 } from "three";
 
-import { CanvasOnDrawParams } from "@app/components/Canvas";
 import FragmentShaderView from "@app/components/FragmentShaderView";
+import { CanvasOnDrawParams } from "@app/hooks/useCanvasRenderer";
 
 export interface TestFSProps {
   className?: string | undefined;
@@ -31,7 +31,7 @@ export default function TestFS(props: TestFSProps): ReactElement {
   );
 
   const onDraw = (params: CanvasOnDrawParams): typeof uniforms => {
-    uniforms.time.value = params.clock.getElapsedTime();
+    uniforms.time.value = params.canvasRenderer.clock.getElapsedTime();
     uniforms.resolution.value = new Vector2(params.width, params.height);
     uniforms.ratio.value = params.width / params.height;
     return uniforms;
