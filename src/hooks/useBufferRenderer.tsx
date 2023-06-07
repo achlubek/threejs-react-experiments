@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 
 import * as THREE from "three";
 
@@ -36,11 +36,15 @@ export interface BufferRenderer {
 export default function useBufferRenderer(
   props: UseBufferRendererProps
 ): BufferRenderer {
-  const texture = new THREE.WebGLRenderTarget(props.width, props.height, {
-    minFilter: THREE.LinearFilter,
-    magFilter: THREE.LinearFilter,
-  });
-  const clock = new THREE.Clock();
+  const texture = useMemo(
+    () =>
+      new THREE.WebGLRenderTarget(props.width, props.height, {
+        minFilter: THREE.LinearFilter,
+        magFilter: THREE.LinearFilter,
+      }),
+    []
+  );
+  const clock = useMemo(() => new THREE.Clock(), []);
 
   useEffect(() => {
     return () => {

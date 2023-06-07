@@ -1,11 +1,8 @@
-import { ReactElement, useCallback, useEffect, useMemo, useState } from "react";
+import { ReactElement, useEffect, useMemo } from "react";
 
 import * as THREE from "three";
 
-import {
-  BufferOnDrawParams,
-  BufferRenderer,
-} from "@app/hooks/useBufferRenderer";
+import { BufferOnDrawParams } from "@app/hooks/useBufferRenderer";
 import { CanvasOnDrawParams } from "@app/hooks/useCanvasRenderer";
 import useFragmentShaderBuffer from "@app/hooks/useFragmentShaderBuffer";
 import useFragmentShaderView from "@app/hooks/useFragmentShaderView";
@@ -55,15 +52,6 @@ export default function SimpleBoxFS(props: SimpleBoxFSProps): ReactElement {
     uniforms: uniformsBuffer,
   });
 
-  const tmp = useMemo<{ render: () => void }>(
-    () => ({
-      render: () => {
-        /**/
-      },
-    }),
-    []
-  );
-
   const uniforms = useMemo(
     () => ({
       colorMultiplier: { value: 0.7 },
@@ -77,8 +65,6 @@ export default function SimpleBoxFS(props: SimpleBoxFSProps): ReactElement {
     uniforms.colorMultiplier.value =
       uniforms.colorMultiplier.value * 0.8 +
       uniforms.desiredColorMultiplier.value * 0.2;
-    console.log("AKECK onDraw");
-    console.log(bufferRenderer);
     bufferRenderer.render();
     return uniforms;
   };
