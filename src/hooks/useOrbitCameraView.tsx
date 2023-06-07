@@ -8,20 +8,21 @@ import useCameraView from "@app/hooks/useCameraView";
 import {
   CanvasOnDrawParams,
   CanvasRenderer,
+  UseCanvasRendererPropsBase,
 } from "@app/hooks/useCanvasRenderer";
 
-export interface OrbitCameraViewProps {
-  elementClassName?: string | undefined;
-  onDraw: (params: CanvasOnDrawParams) => void;
+export interface UseOrbitCameraViewProps extends UseCanvasRendererPropsBase {
   scene: THREE.Scene;
 }
 
 export default function useOrbitCameraView(
-  props: OrbitCameraViewProps
+  props: UseOrbitCameraViewProps
 ): CanvasRenderer {
   const onDraw = (params: CanvasOnDrawParams): void => {
     controls?.update();
-    props.onDraw(params);
+    if (props.onDraw) {
+      props.onDraw(params);
+    }
   };
 
   const [camera, setCamera] = useState<THREE.Camera>(
@@ -29,8 +30,7 @@ export default function useOrbitCameraView(
   );
 
   const canvasRenderer = useCameraView({
-    elementClassName: props.elementClassName,
-    scene: props.scene,
+    ...props,
     camera,
     onDraw,
     autoUpdateAspect: true,

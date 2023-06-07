@@ -16,13 +16,27 @@ export interface CanvasOnDrawParams {
   height: number;
 }
 
-export interface CanvasProps {
+export interface UseCanvasRendererEvents {
+  onDraw?: ((params: CanvasOnDrawParams) => void) | undefined;
+  onResize?: ((width: number, height: number) => void) | undefined;
+  onMouseMove?:
+    | ((x: number, y: number, intersects: THREE.Intersection[]) => void)
+    | undefined;
+  onMouseDown?:
+    | ((x: number, y: number, intersects: THREE.Intersection[]) => void)
+    | undefined;
+  onMouseUp?:
+    | ((x: number, y: number, intersects: THREE.Intersection[]) => void)
+    | undefined;
+}
+
+export interface UseCanvasRendererPropsBase extends UseCanvasRendererEvents {
+  elementClassName?: string | undefined;
+}
+
+export interface UseCanvasRendererProps extends UseCanvasRendererPropsBase {
   camera: THREE.Camera;
   scene: THREE.Scene;
-  onDraw: (params: CanvasOnDrawParams) => void;
-  onResize: (width: number, height: number) => void;
-  overlayRef: React.MutableRefObject<HTMLDivElement | null>;
-  elementClassName?: string | undefined;
 }
 
 export interface CanvasRenderer {
@@ -34,8 +48,9 @@ export interface CanvasRenderer {
   overlayRef: React.MutableRefObject<HTMLDivElement | null>;
 }
 
-export default function useCanvasRenderer(props: CanvasProps): CanvasRenderer {
-  const { elementClassName, camera, scene, onDraw, onResize } = props;
+export default function useCanvasRenderer(
+  props: UseCanvasRendererProps
+): CanvasRenderer {
   const overlayRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [renderer, setRenderer] = useState<THREE.WebGLRenderer | null>(null);
@@ -61,10 +76,75 @@ export default function useCanvasRenderer(props: CanvasProps): CanvasRenderer {
     }
   }, [canvasRef, canvasRef.current, overlayRef, overlayRef.current]);
 
+  const raycaster = useMemo(() => new THREE.Raycaster(), []);
+
+  const calculateNormalizedMouseCoords = (
+    clientX: number,
+    clientY: number
+  ): { x: number; y: number } => {
+    if (canvasRef.current) {
+      const bbox = canvasRef.current.getBoundingClientRect();
+      const xAbs = clientX - bbox.left;
+      const yAbs = clientY - bbox.top;
+      const xNorm = xAbs / bbox.width;
+      const yNorm = yAbs / bbox.height;
+      return { x: xNorm, y: yNorm };
+    }
+    return { x: 0, y: 0 };
+  };
+
+  const calculateNDCMouseCoords = (normalized: {
+    x: number;
+    y: number;
+  }): THREE.Vector2 => {
+    if (canvasRef.current) {
+      const xSnorm = normalized.x * 2 - 1;
+      const ySnorm = -normalized.y * 2 + 1;
+      return new THREE.Vector2(xSnorm, ySnorm);
+    } else {
+      return new THREE.Vector2(0, 0);
+    }
+  };
+
+  const getIntersections = (pointer: THREE.Vector2): THREE.Intersection[] => {
+    raycaster.setFromCamera(pointer, props.camera);
+    return raycaster.intersectObjects(props.scene.children);
+  };
+
+  const onMouseMove = (e: React.MouseEvent): void => {
+    e.preventDefault();
+    if (canvasRef.current && props.onMouseMove) {
+      const norm = calculateNormalizedMouseCoords(e.clientX, e.clientY);
+      const intersects = getIntersections(calculateNDCMouseCoords(norm));
+      props.onMouseMove(norm.x, norm.y, intersects);
+    }
+  };
+
+  const onMouseDown = (e: React.MouseEvent): void => {
+    e.preventDefault();
+    if (canvasRef.current && props.onMouseDown) {
+      const norm = calculateNormalizedMouseCoords(e.clientX, e.clientY);
+      const intersects = getIntersections(calculateNDCMouseCoords(norm));
+      props.onMouseDown(norm.x, norm.y, intersects);
+    }
+  };
+
+  const onMouseUp = (e: React.MouseEvent): void => {
+    e.preventDefault();
+    if (canvasRef.current && props.onMouseUp) {
+      const norm = calculateNormalizedMouseCoords(e.clientX, e.clientY);
+      const intersects = getIntersections(calculateNDCMouseCoords(norm));
+      props.onMouseUp(norm.x, norm.y, intersects);
+    }
+  };
+
   const element = (
     <div
       ref={overlayRef}
-      className={elementClassName}
+      className={props.elementClassName}
+      onMouseMove={onMouseMove}
+      onMouseDown={onMouseDown}
+      onMouseUp={onMouseUp}
       style={{ overflow: "visible", position: "relative" }}
     >
       <canvas
@@ -76,8 +156,8 @@ export default function useCanvasRenderer(props: CanvasProps): CanvasRenderer {
 
   const canvasRenderer = {
     element,
-    scene,
-    camera,
+    scene: props.scene,
+    camera: props.camera,
     clock,
     renderer,
     overlayRef,
@@ -98,14 +178,16 @@ export default function useCanvasRenderer(props: CanvasProps): CanvasRenderer {
             overlayRef.current.clientWidth,
             overlayRef.current.clientHeight
           );
-          onResize(
-            overlayRef.current.clientWidth,
-            overlayRef.current.clientHeight
-          );
+          if (props.onResize) {
+            props.onResize(
+              overlayRef.current.clientWidth,
+              overlayRef.current.clientHeight
+            );
+          }
         }
-        renderer.render(scene, camera);
-        if (canvasRef.current) {
-          onDraw({
+        renderer.render(props.scene, props.camera);
+        if (canvasRef.current && props.onDraw) {
+          props.onDraw({
             canvasRenderer,
             width: size.x,
             height: size.y,
@@ -121,7 +203,7 @@ export default function useCanvasRenderer(props: CanvasProps): CanvasRenderer {
     return () => {
       disposed = true;
     };
-  }, [canvasRef, overlayRef, renderer, scene, camera]);
+  }, [canvasRef, overlayRef, renderer, props.scene, props.camera]);
 
   return canvasRenderer;
 }

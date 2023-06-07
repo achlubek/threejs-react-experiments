@@ -1,7 +1,7 @@
 import { MouseEventHandler, ReactElement, useEffect, useMemo } from "react";
 
 import * as THREE from "three";
-import { Mesh } from "three";
+import { Mesh, MeshPhysicalMaterial } from "three";
 
 import bumpMap from "@app/assets/bumpmap.jpg";
 import { CanvasOnDrawParams } from "@app/hooks/useCanvasRenderer";
@@ -42,8 +42,6 @@ export default function BoxInTheBox(props: BoxInTheBoxProps): ReactElement {
     scene.add(ambientLight);
   });
 
-  const raycaster = useMemo(() => new THREE.Raycaster(), []);
-
   const onDraw = (params: CanvasOnDrawParams): void => {
     scene
       .getObjectByName("BoxMesh")
@@ -54,52 +52,19 @@ export default function BoxInTheBox(props: BoxInTheBoxProps): ReactElement {
     elementClassName: props.className,
     scene,
     onDraw,
+    onMouseDown: (x: number, y: number, intersects: THREE.Intersection[]) => {
+      console.log({ x, y, intersects });
+    },
+    onMouseMove: (x: number, y: number, intersects: THREE.Intersection[]) => {
+      const boxMesh = scene.getObjectByName("BoxMesh") as Mesh;
+      const material = boxMesh.material as MeshPhysicalMaterial;
+      if (intersects.map((a) => a.object.name).includes("BoxMesh")) {
+        material.color = new THREE.Color("white");
+      } else {
+        material.color = new THREE.Color(props.color);
+      }
+    },
   });
-  /*
-  useEffect(() => {
-    if (orbitCameraView.overlayRef.current) {
-      const bbox = orbitCameraView.overlayRef.current.getBoundingClientRect();
-      const onClick = (e: MouseEvent) => {
-        const xAbs = e.clientX - bbox.left;
-        const yAbs = e.clientY - bbox.top;
-        const xNorm = xAbs / bbox.width;
-        const yNorm = yAbs / bbox.height;
-        const xSnorm = xNorm * 2 - 1;
-        const ySnorm = -yNorm * 2 + 1;
-        const pointer = new THREE.Vector2(xSnorm, ySnorm);
-        raycaster.setFromCamera(pointer, orbitCameraView.camera);
-        const intersects = raycaster.intersectObjects(
-          orbitCameraView.scene.children
-        );
-        console.log(intersects);
-      };
-      orbitCameraView.overlayRef.current.addEventListener("click", onClick);
-      return () => {
-        orbitCameraView.overlayRef.current?.removeEventListener(
-          "click",
-          onClick
-        );
-      };
-    }
-    return undefined;
-  }, [orbitCameraView.overlayRef.current]);*/
-  const onClickX = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (orbitCameraView.overlayRef.current) {
-      const bbox = orbitCameraView.overlayRef.current.getBoundingClientRect();
-      const xAbs = e.clientX - bbox.left;
-      const yAbs = e.clientY - bbox.top;
-      const xNorm = xAbs / bbox.width;
-      const yNorm = yAbs / bbox.height;
-      const xSnorm = xNorm * 2 - 1;
-      const ySnorm = -yNorm * 2 + 1;
-      const pointer = new THREE.Vector2(xSnorm, ySnorm);
-      raycaster.setFromCamera(pointer, orbitCameraView.camera);
-      const intersects = raycaster.intersectObjects(
-        orbitCameraView.scene.children
-      );
-      console.log(intersects);
-    }
-  };
 
-  return <div onClick={(e) => onClickX(e)}>{orbitCameraView.element}</div>;
+  return orbitCameraView.element;
 }

@@ -1,22 +1,19 @@
 import { useRef } from "react";
 
-import * as THREE from "three";
 import { PerspectiveCamera } from "three";
 
 import useCanvasRenderer, {
-  CanvasOnDrawParams,
   CanvasRenderer,
+  UseCanvasRendererProps,
 } from "@app/hooks/useCanvasRenderer";
 
-export interface CameraViewProps {
-  elementClassName?: string | undefined;
-  onDraw: (params: CanvasOnDrawParams) => void;
-  scene: THREE.Scene;
-  camera: THREE.Camera;
+export interface UseCameraViewProps extends UseCanvasRendererProps {
   autoUpdateAspect: boolean;
 }
 
-export default function useCameraView(props: CameraViewProps): CanvasRenderer {
+export default function useCameraView(
+  props: UseCameraViewProps
+): CanvasRenderer {
   const elementRef = useRef<HTMLDivElement | null>(null);
 
   const recalculateCameraAspect = (): void => {
@@ -29,11 +26,12 @@ export default function useCameraView(props: CameraViewProps): CanvasRenderer {
   };
 
   return useCanvasRenderer({
-    elementClassName: props.elementClassName,
-    overlayRef: elementRef,
-    scene: props.scene,
-    camera: props.camera,
-    onDraw: props.onDraw,
-    onResize: () => recalculateCameraAspect(),
+    ...props,
+    onResize: (width: number, height: number) => {
+      recalculateCameraAspect();
+      if (props.onResize) {
+        props.onResize(width, height);
+      }
+    },
   });
 }
