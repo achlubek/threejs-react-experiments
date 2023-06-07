@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 
 import * as THREE from "three";
-import { Vector4 } from "three";
+
+import { renderToTarget } from "@app/util/renderToTarget";
 
 export interface BufferOnDrawParams {
   camera: THREE.Camera;
@@ -44,7 +45,7 @@ export default function useBufferRenderer(
   useEffect(() => {
     const texture = new THREE.WebGLRenderTarget(props.width, props.height, {
       minFilter: THREE.LinearFilter,
-      magFilter: THREE.NearestFilter,
+      magFilter: THREE.LinearFilter,
     });
     setTexture(texture);
 
@@ -52,6 +53,7 @@ export default function useBufferRenderer(
       if (!props.renderer) {
         return;
       }
+
       if (props.onDraw) {
         props.onDraw({
           scene: props.scene,
@@ -60,19 +62,13 @@ export default function useBufferRenderer(
         });
       }
 
-      const oldRenderTarget = props.renderer.getRenderTarget();
-      const oldViewport = props.renderer.getViewport(new Vector4());
-      const oldToneMapping = props.renderer.toneMapping;
-
-      props.renderer.setRenderTarget(texture);
-      props.renderer.setViewport(0, 0, props.width, props.height);
-      props.renderer.toneMapping = props.toneMapping ?? oldToneMapping;
-
-      props.renderer.render(props.scene, props.camera);
-
-      props.renderer.setRenderTarget(oldRenderTarget);
-      props.renderer.setViewport(oldViewport);
-      props.renderer.toneMapping = oldToneMapping;
+      renderToTarget({
+        renderer: props.renderer,
+        scene: props.scene,
+        camera: props.camera,
+        toneMapping: props.toneMapping,
+        target: texture,
+      });
     };
 
     setRender(render);
