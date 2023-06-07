@@ -36,47 +36,39 @@ export interface BufferRenderer {
 export default function useBufferRenderer(
   props: UseBufferRendererProps
 ): BufferRenderer {
-  const [texture, setTexture] = useState<THREE.WebGLRenderTarget | null>(null);
-  const [render, setRender] = useState<() => void>((): void => {
-    /**/
+  const texture = new THREE.WebGLRenderTarget(props.width, props.height, {
+    minFilter: THREE.LinearFilter,
+    magFilter: THREE.LinearFilter,
   });
-  const clock = useMemo(() => new THREE.Clock(), []);
+  const clock = new THREE.Clock();
 
   useEffect(() => {
-    const texture = new THREE.WebGLRenderTarget(props.width, props.height, {
-      minFilter: THREE.LinearFilter,
-      magFilter: THREE.LinearFilter,
-    });
-    setTexture(texture);
-
-    const render = (): void => {
-      if (!props.renderer) {
-        return;
-      }
-
-      if (props.onDraw) {
-        props.onDraw({
-          scene: props.scene,
-          camera: props.camera,
-          clock,
-        });
-      }
-
-      renderToTarget({
-        renderer: props.renderer,
-        scene: props.scene,
-        camera: props.camera,
-        toneMapping: props.toneMapping,
-        target: texture,
-      });
-    };
-
-    setRender(render);
-
     return () => {
       texture.dispose();
     };
-  }, [props.renderer]);
+  }, [texture]);
+
+  const render = (): void => {
+    if (!props.renderer) {
+      return;
+    }
+
+    if (props.onDraw) {
+      props.onDraw({
+        scene: props.scene,
+        camera: props.camera,
+        clock,
+      });
+    }
+
+    renderToTarget({
+      renderer: props.renderer,
+      scene: props.scene,
+      camera: props.camera,
+      toneMapping: props.toneMapping,
+      target: texture,
+    });
+  };
 
   return { render, texture };
 }

@@ -9,6 +9,7 @@ import {
   CanvasRendererMouseEventParams,
 } from "@app/hooks/useCanvasRenderer";
 import useOrbitCameraView from "@app/hooks/useOrbitCameraView";
+import useRenderer from "@app/hooks/useRenderer";
 import { useScene } from "@app/hooks/useScene";
 
 export interface BoxInTheBoxProps {
@@ -51,7 +52,10 @@ export default function BoxInTheBox(props: BoxInTheBoxProps): ReactElement {
       ?.rotateZ(params.canvasRenderer.clock.getDelta() * 0.63);
   };
 
+  const renderer = useRenderer();
+
   const orbitCameraView = useOrbitCameraView({
+    renderer: renderer.renderer,
     elementClassName: props.className,
     scene,
     onDraw,

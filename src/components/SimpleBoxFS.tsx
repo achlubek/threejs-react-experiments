@@ -1,11 +1,15 @@
-import { ReactElement, useEffect, useMemo, useState } from "react";
+import { ReactElement, useCallback, useEffect, useMemo, useState } from "react";
 
 import * as THREE from "three";
 
-import { BufferRenderer } from "@app/hooks/useBufferRenderer";
+import {
+  BufferOnDrawParams,
+  BufferRenderer,
+} from "@app/hooks/useBufferRenderer";
 import { CanvasOnDrawParams } from "@app/hooks/useCanvasRenderer";
 import useFragmentShaderBuffer from "@app/hooks/useFragmentShaderBuffer";
 import useFragmentShaderView from "@app/hooks/useFragmentShaderView";
+import useRenderer from "@app/hooks/useRenderer";
 
 export interface SimpleBoxFSProps {
   className?: string | undefined;
@@ -23,8 +27,42 @@ export default function SimpleBoxFS(props: SimpleBoxFSProps): ReactElement {
         gl_FragColor = vec4(vec3(1.0, 0.5, 0.4) * colorMultiplier, 1.0);
       }
     }`;
+  const renderer = useRenderer();
 
-  const [bufferRenderer, setBufferRenderer] = useState<BufferRenderer | null>();
+  const uniformsBuffer = useMemo(
+    () => ({
+      time: { value: 0.0 },
+    }),
+    []
+  );
+
+  const onDrawBuffer = (params: BufferOnDrawParams): typeof uniformsBuffer => {
+    uniformsBuffer.time.value = params.clock.getElapsedTime();
+    return uniformsBuffer;
+  };
+
+  const bufferRenderer = useFragmentShaderBuffer({
+    fragmentShader: `
+      varying vec2 UV;
+      uniform float time;
+      void main() {
+        gl_FragColor = vec4(UV.x, sin(UV.y * 10.0 + time), 1.0, 1.0);
+      }`,
+    height: 32,
+    width: 32,
+    renderer: renderer.renderer,
+    onDraw: onDrawBuffer,
+    uniforms: uniformsBuffer,
+  });
+
+  const tmp = useMemo<{ render: () => void }>(
+    () => ({
+      render: () => {
+        /**/
+      },
+    }),
+    []
+  );
 
   const uniforms = useMemo(
     () => ({
@@ -39,14 +77,14 @@ export default function SimpleBoxFS(props: SimpleBoxFSProps): ReactElement {
     uniforms.colorMultiplier.value =
       uniforms.colorMultiplier.value * 0.8 +
       uniforms.desiredColorMultiplier.value * 0.2;
-    if (bufferRenderer?.texture && bufferRenderer.render) {
-      uniforms.tex0.value = bufferRenderer.texture.texture;
-      bufferRenderer.render();
-    }
+    console.log("AKECK onDraw");
+    console.log(bufferRenderer);
+    bufferRenderer.render();
     return uniforms;
   };
 
   const fragmentShaderView = useFragmentShaderView({
+    renderer: renderer.renderer,
     uniforms,
     onDraw,
     fragmentShader: shader,
@@ -55,23 +93,12 @@ export default function SimpleBoxFS(props: SimpleBoxFSProps): ReactElement {
     onMouseLeave: () => (uniforms.desiredColorMultiplier.value = 0.7),
   });
 
-  const fs = useFragmentShaderBuffer({
-    fragmentShader: `
-      varying vec2 UV;
-      void main() {
-        gl_FragColor = vec4(UV.x, UV.y, 1.0, 1.0);
-      }`,
-    height: 32,
-    width: 32,
-    renderer: fragmentShaderView.renderer,
-  });
-
   useEffect(() => {
-    setBufferRenderer(fs);
-    if (fs.texture) {
-      uniforms.tex0.value = fs.texture.texture;
+    console.log("Setting buffer renderer");
+    if (bufferRenderer.texture) {
+      uniforms.tex0.value = bufferRenderer.texture.texture;
     }
-  }, [fs.texture]);
+  }, [bufferRenderer.texture]);
 
   return fragmentShaderView.element;
 }

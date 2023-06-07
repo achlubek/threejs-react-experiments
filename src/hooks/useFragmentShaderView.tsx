@@ -9,8 +9,9 @@ import useCanvasRenderer, {
 } from "@app/hooks/useCanvasRenderer";
 import { useScene } from "@app/hooks/useScene";
 
-export interface CameraViewProps<UniType extends Record<string, THREE.IUniform>>
-  extends UseCanvasRendererPropsBase {
+export interface FragmentShaderViewProps<
+  UniType extends Record<string, THREE.IUniform>
+> extends UseCanvasRendererPropsBase {
   onDraw?: ((params: CanvasOnDrawParams) => UniType) | undefined;
   fragmentShader: string;
   uniforms?: UniType | undefined;
@@ -18,7 +19,7 @@ export interface CameraViewProps<UniType extends Record<string, THREE.IUniform>>
 
 export default function useFragmentShaderView<
   UniType extends Record<string, THREE.IUniform>
->(props: CameraViewProps<UniType>): CanvasRenderer {
+>(props: FragmentShaderViewProps<UniType>): CanvasRenderer {
   const vertexShader = `
     varying vec2 UV;
 

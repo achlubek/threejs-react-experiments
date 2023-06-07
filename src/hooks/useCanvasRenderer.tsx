@@ -1,17 +1,12 @@
-import React, {
-  ReactElement,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { ReactElement, useEffect, useMemo, useRef } from "react";
 
 import * as THREE from "three";
 import { Vector2 } from "three";
 
+import { renderToTarget } from "@app/util/renderToTarget";
+
 export interface CanvasOnDrawParams {
   canvasRenderer: CanvasRenderer;
-  canvas: HTMLCanvasElement;
   width: number;
   height: number;
 }
@@ -52,6 +47,7 @@ export interface UseCanvasRendererEvents {
 
 export interface UseCanvasRendererPropsBase extends UseCanvasRendererEvents {
   elementClassName?: string | undefined;
+  renderer: THREE.WebGLRenderer | null;
 }
 
 export interface UseCanvasRendererProps extends UseCanvasRendererPropsBase {
@@ -61,7 +57,6 @@ export interface UseCanvasRendererProps extends UseCanvasRendererPropsBase {
 }
 
 export interface CanvasRenderer {
-  renderer: THREE.WebGLRenderer | null;
   clock: THREE.Clock;
   element: ReactElement;
   scene: THREE.Scene;
@@ -73,21 +68,12 @@ export default function useCanvasRenderer(
   props: UseCanvasRendererProps
 ): CanvasRenderer {
   const overlayRef = useRef<HTMLDivElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [renderer, setRenderer] = useState<THREE.WebGLRenderer | null>(null);
   const clock = useMemo(() => new THREE.Clock(), []);
   const raycaster = useMemo(() => new THREE.Raycaster(), []);
 
   useEffect(() => {
-    if (canvasRef.current && overlayRef.current) {
-      const threeRenderer = new THREE.WebGLRenderer({
-        canvas: canvasRef.current,
-        depth: true,
-        antialias: true,
-        logarithmicDepthBuffer: true,
-        alpha: true,
-        stencil: false,
-      });
+    if (overlayRef.current && props.renderer) {
+      const threeRenderer = props.renderer;
       threeRenderer.setSize(
         overlayRef.current.clientWidth,
         overlayRef.current.clientHeight
@@ -95,20 +81,20 @@ export default function useCanvasRenderer(
       threeRenderer.toneMapping =
         props.toneMapping ?? THREE.ACESFilmicToneMapping;
       threeRenderer.outputColorSpace = "srgb";
-      setRenderer(threeRenderer);
+      overlayRef.current.appendChild(threeRenderer.domElement);
       return () => {
         threeRenderer.dispose();
       };
     }
     return undefined;
-  }, [canvasRef, canvasRef.current, overlayRef, overlayRef.current]);
+  }, [overlayRef, overlayRef.current]);
 
   const calculateNormalizedMouseCoords = (
     clientX: number,
     clientY: number
   ): CanvasRendererPosition => {
-    if (canvasRef.current) {
-      const bbox = canvasRef.current.getBoundingClientRect();
+    if (props.renderer) {
+      const bbox = props.renderer.domElement.getBoundingClientRect();
       const xAbs = clientX - bbox.left;
       const yAbs = clientY - bbox.top;
       const xNorm = xAbs / bbox.width;
@@ -121,13 +107,9 @@ export default function useCanvasRenderer(
   const calculateNDCMouseCoords = (
     normalized: CanvasRendererPosition
   ): THREE.Vector2 => {
-    if (canvasRef.current) {
-      const xSnorm = normalized.x * 2 - 1;
-      const ySnorm = -normalized.y * 2 + 1;
-      return new THREE.Vector2(xSnorm, ySnorm);
-    } else {
-      return new THREE.Vector2(0, 0);
-    }
+    const xSnorm = normalized.x * 2 - 1;
+    const ySnorm = -normalized.y * 2 + 1;
+    return new THREE.Vector2(xSnorm, ySnorm);
   };
 
   const getIntersections = (pointer: THREE.Vector2): THREE.Intersection[] => {
@@ -139,7 +121,7 @@ export default function useCanvasRenderer(
     e: React.MouseEvent,
     handler: ((event: CanvasRendererMouseEventParams) => void) | undefined
   ): void => {
-    if (handler && canvasRef.current) {
+    if (handler) {
       e.preventDefault();
       const position = calculateNormalizedMouseCoords(e.clientX, e.clientY);
       const intersects = getIntersections(calculateNDCMouseCoords(position));
@@ -155,7 +137,7 @@ export default function useCanvasRenderer(
     e: React.TouchEvent,
     handler: ((event: TouchEventParams) => void) | undefined
   ): void => {
-    if (handler && canvasRef.current) {
+    if (handler) {
       e.preventDefault();
       const touches: CanvasRendererMouseEventParams[] = [];
       for (let i = 0; i < e.touches.length; i++) {
@@ -185,9 +167,7 @@ export default function useCanvasRenderer(
       onTouchStart={(e) => handleTouchEvent(e, props.onTouchStart)}
       onTouchEnd={(e) => handleTouchEvent(e, props.onTouchEnd)}
       style={{ overflow: "hidden", position: "relative" }}
-    >
-      <canvas ref={canvasRef} style={{ display: "block" }}></canvas>
-    </div>
+    />
   );
 
   const canvasRenderer = {
@@ -195,41 +175,47 @@ export default function useCanvasRenderer(
     scene: props.scene,
     camera: props.camera,
     clock,
-    renderer,
     overlayRef,
   };
 
   useEffect(() => {
     let disposed = false;
-    if (renderer) {
+    if (props.renderer) {
       const renderLoop = (): void => {
         let size = new Vector2(0, 0);
-        size = renderer.getSize(size);
-        if (
-          overlayRef.current &&
-          (size.x !== overlayRef.current.clientWidth ||
-            size.y !== overlayRef.current.clientHeight)
-        ) {
-          renderer.setSize(
-            overlayRef.current.clientWidth,
-            overlayRef.current.clientHeight
-          );
-          if (props.onResize) {
-            props.onResize(
+        if (props.renderer) {
+          size = props.renderer.getSize(size);
+          if (
+            overlayRef.current &&
+            (size.x !== overlayRef.current.clientWidth ||
+              size.y !== overlayRef.current.clientHeight)
+          ) {
+            props.renderer.setSize(
               overlayRef.current.clientWidth,
               overlayRef.current.clientHeight
             );
+            if (props.onResize) {
+              props.onResize(
+                overlayRef.current.clientWidth,
+                overlayRef.current.clientHeight
+              );
+            }
           }
-        }
-        if (canvasRef.current && props.onDraw) {
-          props.onDraw({
-            canvasRenderer,
-            width: size.x,
-            height: size.y,
-            canvas: canvasRef.current,
+          if (props.onDraw) {
+            props.onDraw({
+              canvasRenderer,
+              width: size.x,
+              height: size.y,
+            });
+          }
+          renderToTarget({
+            renderer: props.renderer,
+            camera: props.camera,
+            scene: props.scene,
+            toneMapping: props.toneMapping,
+            target: null,
           });
         }
-        renderer.render(props.scene, props.camera);
         if (!disposed) {
           requestAnimationFrame(() => renderLoop());
         }
@@ -239,15 +225,7 @@ export default function useCanvasRenderer(
     return () => {
       disposed = true;
     };
-  }, [
-    canvasRef,
-    overlayRef,
-    canvasRef.current,
-    overlayRef.current,
-    renderer,
-    props.scene,
-    props.camera,
-  ]);
+  }, [overlayRef, overlayRef.current, props.scene, props.camera]);
 
   return canvasRenderer;
 }
