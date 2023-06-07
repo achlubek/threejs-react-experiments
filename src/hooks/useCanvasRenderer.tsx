@@ -138,6 +138,36 @@ export default function useCanvasRenderer(
     }
   };
 
+  const onTouchMove = (e: React.TouchEvent): void => {
+    e.preventDefault();
+    if (e.touches.length > 0 && canvasRef.current && props.onMouseMove) {
+      const t = e.touches.item(0);
+      const norm = calculateNormalizedMouseCoords(t.clientX, t.clientY);
+      const intersects = getIntersections(calculateNDCMouseCoords(norm));
+      props.onMouseMove(norm.x, norm.y, intersects);
+    }
+  };
+
+  const onTouchStart = (e: React.TouchEvent): void => {
+    e.preventDefault();
+    if (e.touches.length > 0 && canvasRef.current && props.onMouseDown) {
+      const t = e.touches.item(0);
+      const norm = calculateNormalizedMouseCoords(t.clientX, t.clientY);
+      const intersects = getIntersections(calculateNDCMouseCoords(norm));
+      props.onMouseDown(norm.x, norm.y, intersects);
+    }
+  };
+
+  const onTouchEnd = (e: React.TouchEvent): void => {
+    e.preventDefault();
+    if (e.touches.length > 0 && canvasRef.current && props.onMouseUp) {
+      const t = e.touches.item(0);
+      const norm = calculateNormalizedMouseCoords(t.clientX, t.clientY);
+      const intersects = getIntersections(calculateNDCMouseCoords(norm));
+      props.onMouseUp(norm.x, norm.y, intersects);
+    }
+  };
+
   const element = (
     <div
       ref={overlayRef}
@@ -145,6 +175,9 @@ export default function useCanvasRenderer(
       onMouseMove={onMouseMove}
       onMouseDown={onMouseDown}
       onMouseUp={onMouseUp}
+      onTouchMove={onTouchMove}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
       style={{ overflow: "visible", position: "relative" }}
     >
       <canvas

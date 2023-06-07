@@ -1,4 +1,4 @@
-import { MouseEventHandler, ReactElement, useEffect, useMemo } from "react";
+import { ReactElement } from "react";
 
 import * as THREE from "three";
 import { Mesh, MeshPhysicalMaterial } from "three";
@@ -53,9 +53,10 @@ export default function BoxInTheBox(props: BoxInTheBoxProps): ReactElement {
     scene,
     onDraw,
     onMouseDown: (x: number, y: number, intersects: THREE.Intersection[]) => {
+      // eslint-disable-next-line no-console
       console.log({ x, y, intersects });
     },
-    onMouseMove: (x: number, y: number, intersects: THREE.Intersection[]) => {
+    onMouseMove: (_x: number, _y: number, intersects: THREE.Intersection[]) => {
       const boxMesh = scene.getObjectByName("BoxMesh") as Mesh;
       const material = boxMesh.material as MeshPhysicalMaterial;
       if (intersects.map((a) => a.object.name).includes("BoxMesh")) {
