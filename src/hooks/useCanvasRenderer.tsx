@@ -55,6 +55,7 @@ export default function useCanvasRenderer(
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [renderer, setRenderer] = useState<THREE.WebGLRenderer | null>(null);
   const clock = useMemo(() => new THREE.Clock(), []);
+  const raycaster = useMemo(() => new THREE.Raycaster(), []);
 
   useEffect(() => {
     if (canvasRef.current && overlayRef.current) {
@@ -75,8 +76,6 @@ export default function useCanvasRenderer(
       setRenderer(threeRenderer);
     }
   }, [canvasRef, canvasRef.current, overlayRef, overlayRef.current]);
-
-  const raycaster = useMemo(() => new THREE.Raycaster(), []);
 
   const calculateNormalizedMouseCoords = (
     clientX: number,
@@ -236,7 +235,15 @@ export default function useCanvasRenderer(
     return () => {
       disposed = true;
     };
-  }, [canvasRef, overlayRef, renderer, props.scene, props.camera]);
+  }, [
+    canvasRef,
+    overlayRef,
+    canvasRef.current,
+    overlayRef.current,
+    renderer,
+    props.scene,
+    props.camera,
+  ]);
 
   return canvasRenderer;
 }
