@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import styled from "styled-components";
 
 import BoxInTheBox from "@app/components/BoxInTheBox";
+import CombinationPipelineTest from "@app/components/CombinationPipelineTest";
 import SimpleBoxFS from "@app/components/SimpleBoxFS";
 import TestFS from "@app/components/TestFS";
 
@@ -28,6 +29,7 @@ export default function App(): React.ReactElement {
       </Container>
       <Container>
         <StyledSimpleBoxFS />
+        <StyledCombinationPipelineTest />
       </Container>
     </>
   );
@@ -59,4 +61,10 @@ const StyledSimpleBoxFS = styled(SimpleBoxFS)`
   margin: 14px;
   border-radius: 100px;
   border: 1px solid black;
+`;
+
+const StyledCombinationPipelineTest = styled(CombinationPipelineTest)`
+  flex: 1;
+  width: 100%;
+  height: 80vh;
 `;

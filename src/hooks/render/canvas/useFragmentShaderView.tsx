@@ -5,14 +5,15 @@ import useCanvasRenderer, {
   CanvasRenderer,
   UseCanvasRendererPropsBase,
 } from "@app/hooks/render/canvas/useCanvasRenderer";
-import useFragmentShader from "@app/hooks/render/useFragmentShader";
+import useFragmentShader, {
+  FragmentShaderProps,
+} from "@app/hooks/render/useFragmentShader";
 
 export interface FragmentShaderViewProps<
   UniType extends Record<string, THREE.IUniform>
-> extends UseCanvasRendererPropsBase {
-  onDraw?: ((params: CanvasOnDrawParams) => UniType) | undefined;
-  fragmentShader: string;
-  uniforms?: UniType | undefined;
+> extends UseCanvasRendererPropsBase,
+    FragmentShaderProps<UniType> {
+  onDraw?: ((params: CanvasOnDrawParams) => UniType | null) | undefined;
 }
 
 export default function useFragmentShaderView<
@@ -22,7 +23,10 @@ export default function useFragmentShaderView<
 
   const onDraw = (params: CanvasOnDrawParams): void => {
     if (props.onDraw) {
-      setUniforms(props.onDraw(params));
+      const newUnis = props.onDraw(params);
+      if (newUnis) {
+        setUniforms(newUnis);
+      }
     }
   };
 

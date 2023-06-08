@@ -5,14 +5,15 @@ import useBackBufferRenderer, {
   BufferOnDrawParams,
   UseBackBufferRendererPropsBase,
 } from "@app/hooks/render/buffer/useBackBufferRenderer";
-import useFragmentShader from "@app/hooks/render/useFragmentShader";
+import useFragmentShader, {
+  FragmentShaderProps,
+} from "@app/hooks/render/useFragmentShader";
 
 export interface FragmentShaderBackBufferProps<
   UniType extends Record<string, THREE.IUniform>
-> extends UseBackBufferRendererPropsBase {
-  onDraw?: ((params: BufferOnDrawParams) => UniType) | undefined;
-  fragmentShader: string;
-  uniforms?: UniType | undefined;
+> extends UseBackBufferRendererPropsBase,
+    FragmentShaderProps<UniType> {
+  onDraw?: ((params: BufferOnDrawParams) => UniType | null) | undefined;
 }
 
 export default function useFragmentShaderBackBuffer<
@@ -22,7 +23,10 @@ export default function useFragmentShaderBackBuffer<
 
   const onDraw = (params: BufferOnDrawParams): void => {
     if (props.onDraw) {
-      setUniforms(props.onDraw(params));
+      const newUnis = props.onDraw(params);
+      if (newUnis) {
+        setUniforms(newUnis);
+      }
     }
   };
 
