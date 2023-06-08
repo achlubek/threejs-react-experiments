@@ -31,6 +31,8 @@ export interface BufferRenderer {
 export default function useBufferRenderer(
   props: UseBufferRendererProps
 ): BufferRenderer {
+  const clock = useMemo(() => new THREE.Clock(), []);
+
   const texture = useMemo(
     () =>
       new THREE.WebGLRenderTarget(props.width, props.height, {
@@ -39,7 +41,6 @@ export default function useBufferRenderer(
       }),
     []
   );
-  const clock = useMemo(() => new THREE.Clock(), []);
 
   useEffect(() => {
     return () => {

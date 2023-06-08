@@ -1,23 +1,23 @@
 import * as THREE from "three";
 
-import useBufferRenderer, {
+import useBackBufferRenderer, {
+  BackBufferRenderer,
   BufferOnDrawParams,
-  BufferRenderer,
-  UseBufferRendererPropsBase,
-} from "@app/hooks/render/buffer/useBufferRenderer";
+  UseBackBufferRendererPropsBase,
+} from "@app/hooks/render/buffer/useBackBufferRenderer";
 import useFragmentShader from "@app/hooks/render/useFragmentShader";
 
-export interface FragmentShaderBufferProps<
+export interface FragmentShaderBackBufferProps<
   UniType extends Record<string, THREE.IUniform>
-> extends UseBufferRendererPropsBase {
+> extends UseBackBufferRendererPropsBase {
   onDraw?: ((params: BufferOnDrawParams) => UniType) | undefined;
   fragmentShader: string;
   uniforms?: UniType | undefined;
 }
 
-export default function useFragmentShaderBuffer<
+export default function useFragmentShaderBackBuffer<
   UniType extends Record<string, THREE.IUniform>
->(props: FragmentShaderBufferProps<UniType>): BufferRenderer {
+>(props: FragmentShaderBackBufferProps<UniType>): BackBufferRenderer {
   const { scene, camera, setUniforms } = useFragmentShader(props);
 
   const onDraw = (params: BufferOnDrawParams): void => {
@@ -26,7 +26,7 @@ export default function useFragmentShaderBuffer<
     }
   };
 
-  return useBufferRenderer({
+  return useBackBufferRenderer({
     ...props,
     scene,
     camera,

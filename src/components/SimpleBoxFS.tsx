@@ -1,6 +1,9 @@
 import { ReactElement, useMemo } from "react";
 
+import { Texture } from "three";
+
 import { BufferOnDrawParams } from "@app/hooks/render/buffer/useBufferRenderer";
+import useFragmentShaderBackBuffer from "@app/hooks/render/buffer/useFragmentShaderBackBuffer";
 import useFragmentShaderBuffer from "@app/hooks/render/buffer/useFragmentShaderBuffer";
 import { CanvasOnDrawParams } from "@app/hooks/render/canvas/useCanvasRenderer";
 import useFragmentShaderView from "@app/hooks/render/canvas/useFragmentShaderView";
@@ -28,6 +31,7 @@ export default function SimpleBoxFS(props: SimpleBoxFSProps): ReactElement {
     () => ({
       time: { value: 0.0 },
       buttons: { value: 0 },
+      tex0: { value: new Texture() },
     }),
     []
   );
@@ -37,15 +41,17 @@ export default function SimpleBoxFS(props: SimpleBoxFSProps): ReactElement {
     return uniformsBuffer;
   };
 
-  const bufferRenderer = useFragmentShaderBuffer({
+  const bufferRenderer = useFragmentShaderBackBuffer({
     fragmentShader: `
       varying vec2 UV;
       uniform float time;
       uniform float buttons;
+      uniform sampler2D tex0;
 
       void main() {
-        vec3 now = vec3(UV.x, step(0.5, sin(UV.y * (10.0 + buttons * 10.0) + time)), 1.0);
-        gl_FragColor = vec4(now, 1.0);
+        vec3 back = texture(tex0, UV).rgb;
+        vec3 now = vec3(UV.x, step(0.5, sin(UV.y * (110.0 + buttons * 10.0) + time)), 1.0);
+        gl_FragColor = vec4(mix(now, back, 0.9), 1.0);
       }`,
     height: 32,
     width: 32,
@@ -58,7 +64,7 @@ export default function SimpleBoxFS(props: SimpleBoxFSProps): ReactElement {
     () => ({
       colorMultiplier: { value: 0.7 },
       desiredColorMultiplier: { value: 0.7 },
-      tex0: { value: bufferRenderer.texture.texture },
+      tex0: { value: bufferRenderer.getBackBuffer().texture },
     }),
     []
   );
@@ -67,6 +73,8 @@ export default function SimpleBoxFS(props: SimpleBoxFSProps): ReactElement {
     uniforms.colorMultiplier.value =
       uniforms.colorMultiplier.value * 0.8 +
       uniforms.desiredColorMultiplier.value * 0.2;
+
+    uniformsBuffer.tex0.value = bufferRenderer.getBackBuffer().texture;
 
     bufferRenderer.render();
     return uniforms;
