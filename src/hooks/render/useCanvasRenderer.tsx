@@ -16,17 +16,23 @@ export interface CanvasRendererPosition {
   y: number;
 }
 
-export interface CanvasRendererMouseEventParams {
+export interface CanvasRendererBaseCanvas2DInteractionEventParams {
   position: CanvasRendererPosition;
   intersects: THREE.Intersection[];
   rayDirection: THREE.Vector3;
+}
+
+export interface CanvasRendererMouseEventParams
+  extends CanvasRendererBaseCanvas2DInteractionEventParams {
+  buttons: number;
 }
 
 export type UseCanvasRendererMouseEventHandler = (
   event: CanvasRendererMouseEventParams
 ) => void;
 
-export type TouchEventParams = CanvasRendererMouseEventParams[];
+export type TouchEventParams =
+  CanvasRendererBaseCanvas2DInteractionEventParams[];
 
 export type UseCanvasRendererMultiTouchEventHandler = (
   event: TouchEventParams
@@ -129,6 +135,7 @@ export default function useCanvasRenderer(
         position,
         intersects,
         rayDirection: raycaster.ray.direction,
+        buttons: e.buttons,
       });
     }
   };
@@ -139,7 +146,7 @@ export default function useCanvasRenderer(
   ): void => {
     if (handler) {
       e.preventDefault();
-      const touches: CanvasRendererMouseEventParams[] = [];
+      const touches: CanvasRendererBaseCanvas2DInteractionEventParams[] = [];
       for (let i = 0; i < e.touches.length; i++) {
         const t = e.touches.item(i);
         const position = calculateNormalizedMouseCoords(t.clientX, t.clientY);

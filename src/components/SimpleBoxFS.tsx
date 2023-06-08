@@ -29,6 +29,7 @@ export default function SimpleBoxFS(props: SimpleBoxFSProps): ReactElement {
   const uniformsBuffer = useMemo(
     () => ({
       time: { value: 0.0 },
+      buttons: { value: 0 },
     }),
     []
   );
@@ -42,8 +43,9 @@ export default function SimpleBoxFS(props: SimpleBoxFSProps): ReactElement {
     fragmentShader: `
       varying vec2 UV;
       uniform float time;
+      uniform float buttons;
       void main() {
-        gl_FragColor = vec4(UV.x, sin(UV.y * 10.0 + time), 1.0, 1.0);
+        gl_FragColor = vec4(UV.x, sin(UV.y * (10.0 + buttons * 10.0) + time), 1.0, 1.0);
       }`,
     height: 32,
     width: 32,
@@ -56,10 +58,17 @@ export default function SimpleBoxFS(props: SimpleBoxFSProps): ReactElement {
     () => ({
       colorMultiplier: { value: 0.7 },
       desiredColorMultiplier: { value: 0.7 },
-      tex0: { value: new THREE.Texture() }, // ah yes
+      tex0: { value: new THREE.Texture() },
     }),
     []
   );
+
+  useEffect(() => {
+    console.log("Setting buffer renderer");
+    if (bufferRenderer.texture) {
+      uniforms.tex0.value = bufferRenderer.texture.texture;
+    }
+  }, [bufferRenderer.texture]);
 
   const onDraw = (_params: CanvasOnDrawParams): typeof uniforms => {
     uniforms.colorMultiplier.value =
@@ -77,14 +86,8 @@ export default function SimpleBoxFS(props: SimpleBoxFSProps): ReactElement {
     elementClassName: props.className,
     onMouseEnter: () => (uniforms.desiredColorMultiplier.value = 1.0),
     onMouseLeave: () => (uniforms.desiredColorMultiplier.value = 0.7),
+    onMouseMove: (params) => (uniformsBuffer.buttons.value = params.buttons),
   });
-
-  useEffect(() => {
-    console.log("Setting buffer renderer");
-    if (bufferRenderer.texture) {
-      uniforms.tex0.value = bufferRenderer.texture.texture;
-    }
-  }, [bufferRenderer.texture]);
 
   return fragmentShaderView.element;
 }
