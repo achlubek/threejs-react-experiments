@@ -3,11 +3,11 @@ import { ReactElement, useMemo } from "react";
 import * as THREE from "three";
 import { ACESFilmicToneMapping, Mesh, PerspectiveCamera, Vector3 } from "three";
 
-import useManualRenderTargetRenderer from "@app/hooks/render/buffer/useManualRenderTargetRenderer";
-import useCanvas from "@app/hooks/render/canvas/useCanvas";
+import useCanvas from "@app/hooks/render/useCanvas";
+import useRender from "@app/hooks/render/useRender";
 import useRenderLoop from "@app/hooks/render/useRenderLoop";
-import useRenderer from "@app/hooks/render/useRenderer";
 import { useScene } from "@app/hooks/render/useScene";
+import useThreeRenderer from "@app/hooks/render/useThreeRenderer";
 import { updateCameraAspectRatio } from "@app/util/updateCameraAspectRatio";
 
 export interface BoxInTheBoxProps {
@@ -34,9 +34,9 @@ export default function SimplestBox(props: BoxInTheBoxProps): ReactElement {
     scene.add(ambientLight);
   });
 
-  const renderer = useRenderer();
+  const renderer = useThreeRenderer();
 
-  const bufferRenderer = useManualRenderTargetRenderer({
+  const render = useRender({
     renderer,
   });
 
@@ -60,7 +60,7 @@ export default function SimplestBox(props: BoxInTheBoxProps): ReactElement {
   useRenderLoop(() => {
     canvas.update();
 
-    bufferRenderer.render({
+    render({
       scene,
       camera,
       toneMapping: ACESFilmicToneMapping,

@@ -15,13 +15,9 @@ export interface BufferRenderCallParams {
   toneMapping?: THREE.ToneMapping | undefined;
 }
 
-export interface BufferRenderer {
-  render: (params: BufferRenderCallParams) => void;
-}
+export type Render = (params: BufferRenderCallParams) => void;
 
-export default function useManualRenderTargetRenderer(
-  props: UseBufferRendererBase
-): BufferRenderer {
+export default function useRender(props: UseBufferRendererBase): Render {
   const render = (params: BufferRenderCallParams): void => {
     renderToTarget({
       ...props,
@@ -29,5 +25,5 @@ export default function useManualRenderTargetRenderer(
     });
   };
 
-  return { render };
+  return render;
 }

@@ -2,30 +2,29 @@ import { useEffect, useMemo } from "react";
 
 import * as THREE from "three";
 
-import useManualRenderTargetRenderer, {
-  UseBufferRendererBase,
-} from "@app/hooks/render/buffer/useManualRenderTargetRenderer";
+import { UseBufferRendererBase } from "@app/hooks/render/useRender";
 
-export interface UseBackBufferRendererPropsBase extends UseBufferRendererBase {
+export interface UseBackBufferPropsBase extends UseBufferRendererBase {
   renderer: THREE.WebGLRenderer;
   width: number;
   height: number;
 }
 
-export interface BackBufferRendererRenderCallParams {
+export interface BackBufferRenderCallParams {
   camera: THREE.Camera;
   scene: THREE.Scene;
   toneMapping?: THREE.ToneMapping | undefined;
 }
 
-export interface BackBufferRenderer {
+export interface BackBuffer {
+  getTarget(): THREE.WebGLRenderTarget;
   getBackBuffer(): THREE.WebGLRenderTarget;
-  render: (params: BackBufferRendererRenderCallParams) => void;
+  toggleState(): void;
 }
 
-export default function useBackBufferRenderer(
-  props: UseBackBufferRendererPropsBase
-): BackBufferRenderer {
+export default function useBackBufferHelper(
+  props: UseBackBufferPropsBase
+): BackBuffer {
   const textures: [THREE.WebGLRenderTarget, THREE.WebGLRenderTarget] = useMemo(
     () => [
       new THREE.WebGLRenderTarget(props.width, props.height, {
@@ -63,17 +62,5 @@ export default function useBackBufferRenderer(
     };
   }, []);
 
-  const inner = useManualRenderTargetRenderer({
-    renderer: props.renderer,
-  });
-
-  const render = (params: BackBufferRendererRenderCallParams): void => {
-    inner.render({
-      ...params,
-      target: getTarget(),
-    });
-    toggleState();
-  };
-
-  return { render, getBackBuffer };
+  return { getTarget, getBackBuffer, toggleState };
 }

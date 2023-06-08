@@ -1,17 +1,19 @@
 import { useEffect, useMemo } from "react";
 
 import * as THREE from "three";
+import { NoToneMapping } from "three";
 
-export default function useRenderer(): THREE.WebGLRenderer {
+export default function useThreeRenderer(): THREE.WebGLRenderer {
   const renderer = useMemo(() => {
-    //threeRenderer.outputColorSpace = "srgb";
-    return new THREE.WebGLRenderer({
+    const threeRenderer = new THREE.WebGLRenderer({
       depth: true,
       antialias: true,
       logarithmicDepthBuffer: true,
       alpha: true,
       stencil: false,
     });
+    threeRenderer.toneMapping = NoToneMapping;
+    return threeRenderer;
   }, []);
 
   useEffect(() => {

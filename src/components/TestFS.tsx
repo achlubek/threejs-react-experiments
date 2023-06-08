@@ -2,11 +2,11 @@ import { ReactElement, useMemo } from "react";
 
 import { Clock, Vector2 } from "three";
 
-import useFragmentShaderRenderer from "@app/hooks/render/buffer/useFragmentShaderRenderer";
-import useManualRenderTargetRenderer from "@app/hooks/render/buffer/useManualRenderTargetRenderer";
-import useCanvas from "@app/hooks/render/canvas/useCanvas";
+import useFullScreenShaderPassHelper from "@app/hooks/render/helpers/useFullScreenShaderPassHelper";
+import useCanvas from "@app/hooks/render/useCanvas";
+import useRender from "@app/hooks/render/useRender";
 import useRenderLoop from "@app/hooks/render/useRenderLoop";
-import useRenderer from "@app/hooks/render/useRenderer";
+import useThreeRenderer from "@app/hooks/render/useThreeRenderer";
 
 export interface TestFSProps {
   className?: string | undefined;
@@ -35,16 +35,15 @@ export default function TestFS(props: TestFSProps): ReactElement {
 
   const clock = useMemo(() => new Clock(), []);
 
-  const renderer = useRenderer();
+  const renderer = useThreeRenderer();
 
-  const bufferRenderer = useManualRenderTargetRenderer({
+  const render = useRender({
     renderer,
   });
 
-  const stage = useFragmentShaderRenderer({
+  const pass = useFullScreenShaderPassHelper({
     uniforms,
     fragmentShader: shader,
-    bufferRenderer,
   });
 
   const canvas = useCanvas({
@@ -58,10 +57,12 @@ export default function TestFS(props: TestFSProps): ReactElement {
     const canvasSize = renderer.getSize(new Vector2());
     uniforms.resolution.value = new Vector2(canvasSize.x, canvasSize.y);
     uniforms.ratio.value = canvasSize.x / canvasSize.y;
-    stage.setUniforms(uniforms);
+    pass.setUniforms(uniforms);
 
-    stage.render({
+    render({
       target: null,
+      camera: pass.camera,
+      scene: pass.scene,
     });
   });
 

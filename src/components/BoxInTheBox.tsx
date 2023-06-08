@@ -13,11 +13,11 @@ import {
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 import bumpMap from "@app/assets/bumpmap.jpg";
-import useManualRenderTargetRenderer from "@app/hooks/render/buffer/useManualRenderTargetRenderer";
-import useCanvas from "@app/hooks/render/canvas/useCanvas";
+import useCanvas from "@app/hooks/render/useCanvas";
+import useRender from "@app/hooks/render/useRender";
 import useRenderLoop from "@app/hooks/render/useRenderLoop";
-import useRenderer from "@app/hooks/render/useRenderer";
 import { useScene } from "@app/hooks/render/useScene";
+import useThreeRenderer from "@app/hooks/render/useThreeRenderer";
 import { updateCameraAspectRatio } from "@app/util/updateCameraAspectRatio";
 
 export interface BoxInTheBoxProps {
@@ -65,9 +65,9 @@ export default function BoxInTheBox(props: BoxInTheBoxProps): ReactElement {
     }
   }, [props.color]);
 
-  const renderer = useRenderer();
+  const renderer = useThreeRenderer();
 
-  const bufferRenderer = useManualRenderTargetRenderer({
+  const render = useRender({
     renderer,
   });
 
@@ -127,7 +127,7 @@ export default function BoxInTheBox(props: BoxInTheBoxProps): ReactElement {
     canvas.update();
     scene.getObjectByName("BoxMesh")?.rotateZ(clock.getDelta() * 0.63);
     orbitControls?.update();
-    bufferRenderer.render({
+    render({
       scene,
       camera,
       toneMapping: ACESFilmicToneMapping,

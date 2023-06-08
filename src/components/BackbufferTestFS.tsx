@@ -2,13 +2,13 @@ import { ReactElement, useMemo } from "react";
 
 import { Clock, Vector2 } from "three";
 
-import useBackBufferRenderer from "@app/hooks/render/buffer/useBackBufferRenderer";
-import useFragmentShaderRenderer from "@app/hooks/render/buffer/useFragmentShaderRenderer";
-import useManualRenderTargetRenderer from "@app/hooks/render/buffer/useManualRenderTargetRenderer";
-import useTextureOutputRenderer from "@app/hooks/render/buffer/useTextureOutputRenderer";
-import useCanvas from "@app/hooks/render/canvas/useCanvas";
+import useBackBufferHelper from "@app/hooks/render/helpers/useBackBufferHelper";
+import useFullScreenShaderPassHelper from "@app/hooks/render/helpers/useFullScreenShaderPassHelper";
+import useTextureOutputHelper from "@app/hooks/render/helpers/useTextureOutputHelper";
+import useCanvas from "@app/hooks/render/useCanvas";
+import useRender from "@app/hooks/render/useRender";
 import useRenderLoop from "@app/hooks/render/useRenderLoop";
-import useRenderer from "@app/hooks/render/useRenderer";
+import useThreeRenderer from "@app/hooks/render/useThreeRenderer";
 
 export interface BackbufferTestFSProps {
   className?: string | undefined;
@@ -35,13 +35,13 @@ export default function BackbufferTestFS(
 
   const clock = useMemo(() => new Clock(), []);
 
-  const renderer = useRenderer();
+  const renderer = useThreeRenderer();
 
-  const bufferRenderer = useManualRenderTargetRenderer({
+  const render = useRender({
     renderer,
   });
 
-  const backRenderer = useBackBufferRenderer({
+  const backRenderer = useBackBufferHelper({
     renderer,
     height: 1024,
     width: 1024,
@@ -57,14 +57,13 @@ export default function BackbufferTestFS(
     []
   );
 
-  const stage = useFragmentShaderRenderer({
+  const stage = useFullScreenShaderPassHelper({
     uniforms,
     fragmentShader: shader,
-    bufferRenderer: backRenderer,
   });
 
-  const output = useTextureOutputRenderer({
-    bufferRenderer,
+  const output = useTextureOutputHelper({
+    render,
     texture: backRenderer.getBackBuffer().texture,
   });
 
@@ -82,12 +81,17 @@ export default function BackbufferTestFS(
     uniforms.bb.value = backRenderer.getBackBuffer().texture;
     stage.setUniforms(uniforms);
 
-    stage.render({
-      target: null,
+    render({
+      target: backRenderer.getTarget(),
+      scene: stage.scene,
+      camera: stage.camera,
     });
+    backRenderer.toggleState();
 
-    output.render({
+    render({
       target: null,
+      scene: output.scene,
+      camera: output.camera,
     });
   });
 

@@ -1,13 +1,12 @@
 import * as THREE from "three";
-import { NoToneMapping, Vector4 } from "three";
+import { Vector4 } from "three";
 
-import { BackBufferRenderer } from "@app/hooks/render/buffer/useBackBufferRenderer";
-import { BufferRenderer } from "@app/hooks/render/buffer/useManualRenderTargetRenderer";
-import useFullScreenShaderPassArrangement from "@app/hooks/render/useFullScreenShaderPassArrangement";
+import useFullScreenShaderPassHelper from "@app/hooks/render/helpers/useFullScreenShaderPassHelper";
+import { Render } from "@app/hooks/render/useRender";
 
 export interface TextureOutputRendererProps {
   texture: THREE.Texture;
-  bufferRenderer: BufferRenderer | BackBufferRenderer;
+  render: Render;
 }
 
 export interface TextureOutputRendererRenderCallParams {
@@ -16,11 +15,12 @@ export interface TextureOutputRendererRenderCallParams {
 }
 
 export interface TextureOutputRenderer {
-  render: (params: TextureOutputRendererRenderCallParams) => void;
+  camera: THREE.Camera;
+  scene: THREE.Scene;
   setTexture: (texture: THREE.Texture) => void;
 }
 
-export default function useTextureOutputRenderer(
+export default function useTextureOutputHelper(
   props: TextureOutputRendererProps
 ): TextureOutputRenderer {
   const fragmentShader = `
@@ -28,7 +28,7 @@ export default function useTextureOutputRenderer(
     uniform sampler2D tex;
     void main() { gl_FragColor = texture(tex, UV); } `;
 
-  const { scene, camera, setUniforms } = useFullScreenShaderPassArrangement({
+  const { scene, camera, setUniforms } = useFullScreenShaderPassHelper({
     fragmentShader,
     uniforms: {
       tex: {
@@ -37,17 +37,9 @@ export default function useTextureOutputRenderer(
     },
   });
 
-  const render = (params: TextureOutputRendererRenderCallParams): void => {
-    props.bufferRenderer.render({
-      ...params,
-      camera,
-      scene,
-      toneMapping: NoToneMapping,
-    });
-  };
-
   return {
-    render,
+    camera,
+    scene,
     setTexture: (texture: THREE.Texture) =>
       setUniforms({
         tex: {

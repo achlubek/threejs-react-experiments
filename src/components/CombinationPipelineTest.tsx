@@ -2,11 +2,11 @@ import { ReactElement, useEffect, useMemo } from "react";
 
 import * as THREE from "three";
 
-import useFragmentShaderRenderer from "@app/hooks/render/buffer/useFragmentShaderRenderer";
-import useManualRenderTargetRenderer from "@app/hooks/render/buffer/useManualRenderTargetRenderer";
-import useCanvas from "@app/hooks/render/canvas/useCanvas";
+import useFullScreenShaderPassHelper from "@app/hooks/render/helpers/useFullScreenShaderPassHelper";
+import useCanvas from "@app/hooks/render/useCanvas";
+import useRender from "@app/hooks/render/useRender";
 import useRenderLoop from "@app/hooks/render/useRenderLoop";
-import useRenderer from "@app/hooks/render/useRenderer";
+import useThreeRenderer from "@app/hooks/render/useThreeRenderer";
 
 export interface CombinationPipelineTestProps {
   className?: string | undefined;
@@ -14,7 +14,7 @@ export interface CombinationPipelineTestProps {
 export default function CombinationPipelineTest(
   props: CombinationPipelineTestProps
 ): ReactElement {
-  const renderer = useRenderer();
+  const renderer = useThreeRenderer();
 
   const tex1 = useMemo(
     () =>
@@ -41,21 +41,19 @@ export default function CombinationPipelineTest(
     };
   }, []);
 
-  const bufferRenderer = useManualRenderTargetRenderer({
+  const render = useRender({
     renderer,
   });
 
-  const stageR = useFragmentShaderRenderer({
+  const stageR = useFullScreenShaderPassHelper({
     fragmentShader: `void main() { gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0); }`,
-    bufferRenderer,
   });
 
-  const stageG = useFragmentShaderRenderer({
+  const stageG = useFullScreenShaderPassHelper({
     fragmentShader: `
       varying vec2 UV;
       uniform sampler2D prev;
       void main() { gl_FragColor = vec4(texture(prev, UV).rgb + vec3(0.0, 1.0, 0.0), 1.0); }`,
-    bufferRenderer,
     uniforms: {
       prev: {
         value: tex1.texture,
@@ -63,12 +61,11 @@ export default function CombinationPipelineTest(
     },
   });
 
-  const stageB = useFragmentShaderRenderer({
+  const stageB = useFullScreenShaderPassHelper({
     fragmentShader: `
       varying vec2 UV;
       uniform sampler2D prev;
       void main() { gl_FragColor = vec4(texture(prev, UV).rgb + vec3(0.0, 0.0, 1.0), 1.0); }`,
-    bufferRenderer,
     uniforms: {
       prev: {
         value: tex2.texture,
@@ -76,12 +73,11 @@ export default function CombinationPipelineTest(
     },
   });
 
-  const stageA = useFragmentShaderRenderer({
+  const stageA = useFullScreenShaderPassHelper({
     fragmentShader: `
       varying vec2 UV;
       uniform sampler2D prev;
       void main() { gl_FragColor = vec4(texture(prev, UV).rgb, 1.0); }`,
-    bufferRenderer,
     uniforms: {
       prev: {
         value: tex1.texture,
@@ -97,17 +93,21 @@ export default function CombinationPipelineTest(
   useRenderLoop(() => {
     canvas.update();
 
-    stageR.render({
+    render({
+      ...stageR,
       target: tex1,
     });
-    stageG.render({
+    render({
+      ...stageG,
       target: tex2,
     });
 
-    stageB.render({
+    render({
+      ...stageB,
       target: tex1,
     });
-    stageA.render({
+    render({
+      ...stageA,
       target: null,
     });
   });
