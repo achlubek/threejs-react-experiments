@@ -10,7 +10,6 @@ export interface UseBackBufferRendererPropsBase extends UseBufferRendererBase {
   renderer: THREE.WebGLRenderer;
   width: number;
   height: number;
-  onDraw?: (() => void) | undefined;
 }
 
 export interface BackBufferRendererRenderCallParams {
@@ -69,9 +68,6 @@ export default function useBackBufferRenderer(
   });
 
   const render = (params: BackBufferRendererRenderCallParams): void => {
-    if (props.onDraw) {
-      props.onDraw();
-    }
     inner.render({
       ...params,
       target: getTarget(),

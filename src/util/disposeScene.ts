@@ -32,6 +32,9 @@ export function disposeObject3d(o3d: object | null): void {
   };
   Object.keys(o3d).forEach((key) => {
     const v = o3d[key] as unknown | unknown[];
+    if (key === "uniforms") {
+      return; // dont dispose by bound uniforms... i think this is getting out of hand
+    }
     if (Array.isArray(v)) {
       v.map((a) => {
         disposeIfPossible(a as object);

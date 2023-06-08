@@ -11,7 +11,6 @@ export interface FragmentShaderBufferProps<
   UniType extends Record<string, THREE.IUniform>
 > extends FragmentShaderProps<UniType> {
   bufferRenderer: BufferRenderer | BackBufferRenderer;
-  onDraw?: (() => UniType | null) | undefined;
 }
 
 export interface FragmentShaderRendererRenderCallParams {
@@ -19,27 +18,20 @@ export interface FragmentShaderRendererRenderCallParams {
   viewport?: Vector4 | undefined;
 }
 
-export interface FragmentShaderRenderer {
+export interface FragmentShaderRenderer<
+  UniType extends Record<string, THREE.IUniform>
+> {
   render: (params: FragmentShaderRendererRenderCallParams) => void;
+  setUniforms: (unis: UniType) => void;
 }
 
 export default function useFragmentShaderRenderer<
   UniType extends Record<string, THREE.IUniform>
->(props: FragmentShaderBufferProps<UniType>): FragmentShaderRenderer {
+>(props: FragmentShaderBufferProps<UniType>): FragmentShaderRenderer<UniType> {
   const { scene, camera, setUniforms } =
     useFullScreenShaderPassArrangement(props);
 
-  const onDraw = (): void => {
-    if (props.onDraw) {
-      const newUnis = props.onDraw();
-      if (newUnis) {
-        setUniforms(newUnis);
-      }
-    }
-  };
-
   const render = (params: FragmentShaderRendererRenderCallParams): void => {
-    onDraw();
     props.bufferRenderer.render({
       ...params,
       camera,
@@ -48,5 +40,5 @@ export default function useFragmentShaderRenderer<
     });
   };
 
-  return { render };
+  return { render, setUniforms };
 }

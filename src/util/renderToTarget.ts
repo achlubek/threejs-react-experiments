@@ -34,7 +34,7 @@ export const renderToTarget = (props: {
     );
   } else {
     if (!props.viewport) {
-      throw new Error("No viewport specified in multitarget rendering");
+      throw new Error("No viewport specified in multi target rendering");
     }
     props.renderer.setViewport(props.viewport);
   }

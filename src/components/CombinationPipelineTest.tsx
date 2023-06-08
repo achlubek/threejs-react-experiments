@@ -1,4 +1,4 @@
-import { ReactElement } from "react";
+import { ReactElement, useEffect, useMemo } from "react";
 
 import * as THREE from "three";
 
@@ -16,60 +16,75 @@ export default function CombinationPipelineTest(
 ): ReactElement {
   const renderer = useRenderer();
 
-  const tex1 = new THREE.WebGLRenderTarget(32, 32, {
-    minFilter: THREE.LinearFilter,
-    magFilter: THREE.LinearFilter,
-  });
+  const tex1 = useMemo(
+    () =>
+      new THREE.WebGLRenderTarget(32, 32, {
+        minFilter: THREE.LinearFilter,
+        magFilter: THREE.LinearFilter,
+      }),
+    []
+  );
 
-  const tex2 = new THREE.WebGLRenderTarget(32, 32, {
-    minFilter: THREE.LinearFilter,
-    magFilter: THREE.LinearFilter,
-  });
+  const tex2 = useMemo(
+    () =>
+      new THREE.WebGLRenderTarget(32, 32, {
+        minFilter: THREE.LinearFilter,
+        magFilter: THREE.LinearFilter,
+      }),
+    []
+  );
+
+  useEffect(() => {
+    return () => {
+      tex1.dispose();
+      tex2.dispose();
+    };
+  }, []);
 
   const bufferRenderer = useManualRenderTargetRenderer({
     renderer,
   });
 
   const stageR = useFragmentShaderRenderer({
-    fragmentShader: `void main() { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); }`,
+    fragmentShader: `void main() { gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0); }`,
     bufferRenderer,
   });
 
   const stageG = useFragmentShaderRenderer({
     fragmentShader: `
-    varying vec2 UV;
-    uniform sampler2D prev;
-    void main() { gl_FragColor = vec4(texture(prev, UV).rgb + vec3(0.0, 1.0, 0.0), 1.0); }`,
+      varying vec2 UV;
+      uniform sampler2D prev;
+      void main() { gl_FragColor = vec4(texture(prev, UV).rgb + vec3(0.0, 1.0, 0.0), 1.0); }`,
     bufferRenderer,
     uniforms: {
       prev: {
-        value: tex1,
+        value: tex1.texture,
       },
     },
   });
 
   const stageB = useFragmentShaderRenderer({
     fragmentShader: `
-    varying vec2 UV;
-    uniform sampler2D prev;
-    void main() { gl_FragColor = vec4(texture(prev, UV).rgb + vec3(0.0, 0.0, 1.0), 1.0); }`,
+      varying vec2 UV;
+      uniform sampler2D prev;
+      void main() { gl_FragColor = vec4(texture(prev, UV).rgb + vec3(0.0, 0.0, 1.0), 1.0); }`,
     bufferRenderer,
     uniforms: {
       prev: {
-        value: tex2,
+        value: tex2.texture,
       },
     },
   });
 
   const stageA = useFragmentShaderRenderer({
     fragmentShader: `
-    varying vec2 UV;
-    uniform sampler2D prev;
-    void main() { gl_FragColor = vec4(texture(prev, UV).rgb, 1.0); }`,
+      varying vec2 UV;
+      uniform sampler2D prev;
+      void main() { gl_FragColor = vec4(texture(prev, UV).rgb, 1.0); }`,
     bufferRenderer,
     uniforms: {
       prev: {
-        value: tex1,
+        value: tex1.texture,
       },
     },
   });
@@ -81,12 +96,14 @@ export default function CombinationPipelineTest(
 
   useRenderLoop(() => {
     canvas.update();
+
     stageR.render({
       target: tex1,
     });
     stageG.render({
       target: tex2,
     });
+
     stageB.render({
       target: tex1,
     });

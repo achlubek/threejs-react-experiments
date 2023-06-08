@@ -124,6 +124,7 @@ export default function BoxInTheBox(props: BoxInTheBoxProps): ReactElement {
   const clock = useMemo(() => new Clock(), []);
 
   useRenderLoop(() => {
+    canvas.update();
     scene.getObjectByName("BoxMesh")?.rotateZ(clock.getDelta() * 0.63);
     orbitControls?.update();
     bufferRenderer.render({

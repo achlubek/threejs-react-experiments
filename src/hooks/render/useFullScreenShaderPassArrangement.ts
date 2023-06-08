@@ -43,12 +43,7 @@ export default function useFullScreenShaderPassArrangement<
   );
 
   const scene = useScene((s: THREE.Scene) => {
-    const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat);
-    quad.name = "quadX";
-    quad.userData = {
-      material: mat,
-    };
-    s.add(quad);
+    s.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat));
   });
 
   const camera = useMemo(
