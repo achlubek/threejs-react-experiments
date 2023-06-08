@@ -92,15 +92,6 @@ export default function useCanvas(props: UseCanvasProps): Canvas {
     };
   };
 
-  const element = (
-    <div
-      {...props.elementProps}
-      ref={overlayRef}
-      className={props.elementClassName}
-      style={{ overflow: "hidden", position: "relative" }}
-    />
-  );
-
   const update = (): void => {
     let size = new Vector2(0, 0);
     size = props.renderer.getSize(size);
@@ -121,6 +112,15 @@ export default function useCanvas(props: UseCanvasProps): Canvas {
       }
     }
   };
+
+  const element = (
+    <div
+      {...props.elementProps}
+      ref={overlayRef}
+      className={props.elementClassName}
+      style={{ overflow: "hidden", position: "relative" }}
+    />
+  );
 
   return { update, raycast, element, overlayRef };
 }

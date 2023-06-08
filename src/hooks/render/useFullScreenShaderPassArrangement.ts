@@ -31,7 +31,7 @@ export default function useFullScreenShaderPassArrangement<
   const mat = useMemo(
     () =>
       new THREE.ShaderMaterial({
-        uniforms: props.uniforms,
+        uniforms: props.uniforms ?? {},
         vertexShader,
         fragmentShader: props.fragmentShader,
         depthWrite: false,

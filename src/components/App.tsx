@@ -2,8 +2,10 @@ import React, { useState } from "react";
 
 import styled from "styled-components";
 
+import BackbufferTestFS from "@app/components/BackbufferTestFS";
 import BoxInTheBox from "@app/components/BoxInTheBox";
 import CombinationPipelineTest from "@app/components/CombinationPipelineTest";
+import SimplestBox from "@app/components/SimplestBox";
 import TestFS from "@app/components/TestFS";
 
 export default function App(): React.ReactElement {
@@ -15,6 +17,8 @@ export default function App(): React.ReactElement {
         <StyledBoxInTheBox color={"green"} />
         <StyledBoxInTheBox color={"blue"} />
         <StyledTestFS />
+        <StyledSimplestBox color={"yellow"} />
+        <StyledBackbufferTestFS />
       </Container>
       <Container>
         <button
@@ -48,6 +52,18 @@ const StyledBoxInTheBox = styled(BoxInTheBox)`
 `;
 
 const StyledTestFS = styled(TestFS)`
+  flex: 1;
+  width: 100%;
+  height: 80vh;
+`;
+
+const StyledBackbufferTestFS = styled(BackbufferTestFS)`
+  flex: 1;
+  width: 100%;
+  height: 80vh;
+`;
+
+const StyledSimplestBox = styled(SimplestBox)`
   flex: 1;
   width: 100%;
   height: 80vh;
