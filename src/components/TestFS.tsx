@@ -1,9 +1,11 @@
 import { ReactElement, useMemo } from "react";
 
-import { Vector2 } from "three";
+import { ACESFilmicToneMapping, Clock, Vector2 } from "three";
 
-import { CanvasOnDrawParams } from "@app/hooks/render/canvas/useCanvasRenderer";
-import useFragmentShaderView from "@app/hooks/render/canvas/useFragmentShaderView";
+import useManualRenderTargetRenderer from "@app/hooks/render/buffer/useManualRenderTargetRenderer";
+import useCanvasRenderer from "@app/hooks/render/canvas/useCanvasRenderer";
+import useFragmentShader from "@app/hooks/render/useFragmentShader";
+import useRenderLoop from "@app/hooks/render/useRenderLoop";
 import useRenderer from "@app/hooks/render/useRenderer";
 
 export interface TestFSProps {
@@ -31,22 +33,41 @@ export default function TestFS(props: TestFSProps): ReactElement {
     []
   );
 
-  const onDraw = (params: CanvasOnDrawParams): typeof uniforms => {
-    uniforms.time.value = params.canvasRenderer.clock.getElapsedTime();
-    uniforms.resolution.value = new Vector2(params.width, params.height);
-    uniforms.ratio.value = params.width / params.height;
-    return uniforms;
-  };
+  const clock = useMemo(() => new Clock(), []);
 
   const renderer = useRenderer();
 
-  const fragmentShaderView = useFragmentShaderView({
+  const { scene, camera, setUniforms } = useFragmentShader({
     uniforms,
     fragmentShader: shader,
-    elementClassName: props.className,
-    onDraw,
+  });
+
+  const onDraw = (): void => {
+    uniforms.time.value = clock.getElapsedTime();
+    const canvasSize = renderer.getSize(new Vector2());
+    uniforms.resolution.value = new Vector2(canvasSize.x, canvasSize.y);
+    uniforms.ratio.value = canvasSize.x / canvasSize.y;
+    setUniforms(uniforms);
+  };
+
+  const bufferRenderer = useManualRenderTargetRenderer({
     renderer,
   });
 
-  return fragmentShaderView.element;
+  const view = useCanvasRenderer({
+    renderer,
+    onDraw,
+    elementClassName: props.className,
+    bufferRenderer,
+  });
+
+  useRenderLoop(() => {
+    view.render({
+      scene,
+      camera,
+      toneMapping: ACESFilmicToneMapping,
+    });
+  });
+
+  return view.element;
 }

@@ -2,38 +2,31 @@ import { useEffect, useMemo } from "react";
 
 import * as THREE from "three";
 
-import { renderToTarget } from "@app/util/renderToTarget";
+import useManualRenderTargetRenderer, {
+  UseBufferRendererBase,
+} from "@app/hooks/render/buffer/useManualRenderTargetRenderer";
 
-export interface BufferOnDrawParams {
-  camera: THREE.Camera;
-  scene: THREE.Scene;
-  clock: THREE.Clock;
-}
-
-export interface UseBackBufferRendererPropsBase {
+export interface UseBackBufferRendererPropsBase extends UseBufferRendererBase {
   renderer: THREE.WebGLRenderer;
   width: number;
   height: number;
-  onDraw?: ((params: BufferOnDrawParams) => void) | undefined;
-  toneMapping?: THREE.ToneMapping | undefined;
+  onDraw?: (() => void) | undefined;
 }
 
-export interface UseBackBufferRendererProps
-  extends UseBackBufferRendererPropsBase {
+export interface BackBufferRendererRenderCallParams {
   camera: THREE.Camera;
   scene: THREE.Scene;
+  toneMapping?: THREE.ToneMapping | undefined;
 }
 
 export interface BackBufferRenderer {
   getBackBuffer(): THREE.WebGLRenderTarget;
-  render: () => void;
+  render: (params: BackBufferRendererRenderCallParams) => void;
 }
 
 export default function useBackBufferRenderer(
-  props: UseBackBufferRendererProps
+  props: UseBackBufferRendererPropsBase
 ): BackBufferRenderer {
-  const clock = useMemo(() => new THREE.Clock(), []);
-
   const textures: [THREE.WebGLRenderTarget, THREE.WebGLRenderTarget] = useMemo(
     () => [
       new THREE.WebGLRenderTarget(props.width, props.height, {
@@ -71,23 +64,18 @@ export default function useBackBufferRenderer(
     };
   }, []);
 
-  const render = (): void => {
-    if (props.onDraw) {
-      props.onDraw({
-        scene: props.scene,
-        camera: props.camera,
-        clock,
-      });
-    }
+  const inner = useManualRenderTargetRenderer({
+    renderer: props.renderer,
+  });
 
-    renderToTarget({
-      renderer: props.renderer,
-      scene: props.scene,
-      camera: props.camera,
-      toneMapping: props.toneMapping,
+  const render = (params: BackBufferRendererRenderCallParams): void => {
+    if (props.onDraw) {
+      props.onDraw();
+    }
+    inner.render({
+      ...params,
       target: getTarget(),
     });
-
     toggleState();
   };
 
