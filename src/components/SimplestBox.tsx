@@ -1,14 +1,10 @@
 import { ReactElement, useMemo } from "react";
 
 import * as THREE from "three";
-import { ACESFilmicToneMapping, Mesh, PerspectiveCamera, Vector3 } from "three";
+import { Mesh, PerspectiveCamera, Vector3 } from "three";
 
-import useCanvas from "@app/hooks/render/useCanvas";
-import useRender from "@app/hooks/render/useRender";
-import useRenderLoop from "@app/hooks/render/useRenderLoop";
+import useCanvasRenderLoopHelper from "@app/hooks/render/helpers/useCanvasRenderLoopHelper";
 import { useScene } from "@app/hooks/render/useScene";
-import useThreeRenderer from "@app/hooks/render/useThreeRenderer";
-import { updateCameraAspectRatio } from "@app/util/updateCameraAspectRatio";
 
 export interface BoxInTheBoxProps {
   color: THREE.ColorRepresentation;
@@ -34,12 +30,6 @@ export default function SimplestBox(props: BoxInTheBoxProps): ReactElement {
     scene.add(ambientLight);
   });
 
-  const renderer = useThreeRenderer();
-
-  const render = useRender({
-    renderer,
-  });
-
   const camera = useMemo(() => {
     const c = new PerspectiveCamera(65, 1, 0.01, 100.0);
     c.position.y -= 2;
@@ -47,26 +37,12 @@ export default function SimplestBox(props: BoxInTheBoxProps): ReactElement {
     return c;
   }, []);
 
-  const canvas = useCanvas({
-    renderer,
-    elementClassName: props.className,
-    onResize: () => {
-      if (canvas.overlayRef.current) {
-        updateCameraAspectRatio(camera, canvas.overlayRef.current);
-      }
-    },
+  const helper = useCanvasRenderLoopHelper({
+    scene,
+    camera,
+    autoCorrectAspect: true,
+    className: props.className,
   });
 
-  useRenderLoop(() => {
-    canvas.update();
-
-    render({
-      scene,
-      camera,
-      toneMapping: ACESFilmicToneMapping,
-      target: null,
-    });
-  }, [camera, canvas, canvas.overlayRef, canvas.overlayRef.current]);
-
-  return canvas.element;
+  return helper.canvas.element;
 }
