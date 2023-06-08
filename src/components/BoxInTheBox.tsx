@@ -7,10 +7,10 @@ import bumpMap from "@app/assets/bumpmap.jpg";
 import {
   CanvasOnDrawParams,
   CanvasRendererMouseEventParams,
-} from "@app/hooks/render/useCanvasRenderer";
+} from "@app/hooks/render/canvas/useCanvasRenderer";
+import useOrbitCameraView from "@app/hooks/render/canvas/useOrbitCameraView";
 import useRenderer from "@app/hooks/render/useRenderer";
-import useOrbitCameraView from "@app/hooks/util/useOrbitCameraView";
-import { useScene } from "@app/hooks/util/useScene";
+import { useScene } from "@app/hooks/render/useScene";
 
 export interface BoxInTheBoxProps {
   color: THREE.ColorRepresentation;
@@ -55,7 +55,7 @@ export default function BoxInTheBox(props: BoxInTheBoxProps): ReactElement {
   const renderer = useRenderer();
 
   const orbitCameraView = useOrbitCameraView({
-    renderer: renderer.renderer,
+    renderer,
     elementClassName: props.className,
     scene,
     onDraw,

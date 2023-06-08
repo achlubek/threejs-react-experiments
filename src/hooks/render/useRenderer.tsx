@@ -1,15 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo } from "react";
 
 import * as THREE from "three";
 
-export interface Renderer {
-  renderer: THREE.WebGLRenderer | null;
-}
-
-export default function useRenderer(): Renderer {
-  const [renderer, setRenderer] = useState<THREE.WebGLRenderer | null>(null);
-
-  useEffect(() => {
+export default function useRenderer(): THREE.WebGLRenderer {
+  const renderer = useMemo(() => {
     const threeRenderer = new THREE.WebGLRenderer({
       depth: true,
       antialias: true,
@@ -18,11 +12,14 @@ export default function useRenderer(): Renderer {
       stencil: false,
     });
     threeRenderer.outputColorSpace = "srgb";
-    setRenderer(threeRenderer);
+    return threeRenderer;
+  }, []);
+
+  useEffect(() => {
     return () => {
-      threeRenderer.dispose();
+      renderer.dispose();
     };
   }, []);
 
-  return { renderer };
+  return renderer;
 }

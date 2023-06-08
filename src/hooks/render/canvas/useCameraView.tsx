@@ -3,7 +3,7 @@ import { PerspectiveCamera } from "three";
 import useCanvasRenderer, {
   CanvasRenderer,
   UseCanvasRendererProps,
-} from "@app/hooks/render/useCanvasRenderer";
+} from "@app/hooks/render/canvas/useCanvasRenderer";
 
 export interface UseCameraViewProps extends UseCanvasRendererProps {
   autoUpdateAspect: boolean;

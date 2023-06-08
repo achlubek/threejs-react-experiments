@@ -10,17 +10,12 @@ export interface BufferOnDrawParams {
   clock: THREE.Clock;
 }
 
-export interface BufferRendererPosition {
-  x: number;
-  y: number;
-}
-
 export interface UseBufferRendererPropsBase {
-  onDraw?: ((params: BufferOnDrawParams) => void) | undefined;
-  toneMapping?: THREE.ToneMapping | undefined;
-  renderer: THREE.WebGLRenderer | null;
+  renderer: THREE.WebGLRenderer;
   width: number;
   height: number;
+  onDraw?: ((params: BufferOnDrawParams) => void) | undefined;
+  toneMapping?: THREE.ToneMapping | undefined;
 }
 
 export interface UseBufferRendererProps extends UseBufferRendererPropsBase {
@@ -29,7 +24,7 @@ export interface UseBufferRendererProps extends UseBufferRendererPropsBase {
 }
 
 export interface BufferRenderer {
-  texture: THREE.WebGLRenderTarget | null;
+  texture: THREE.WebGLRenderTarget;
   render: () => void;
 }
 
@@ -53,10 +48,6 @@ export default function useBufferRenderer(
   }, [texture]);
 
   const render = (): void => {
-    if (!props.renderer) {
-      return;
-    }
-
     if (props.onDraw) {
       props.onDraw({
         scene: props.scene,

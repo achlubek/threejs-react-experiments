@@ -24,6 +24,7 @@ export function disposeObject3d(o3d: object | null): void {
         v.userData = { disposed: true };
       }
       v.userData.disposed = true;
+      // eslint-disable-next-line no-console
       console.log(
         `Disposed ${v.constructor.name} with name "${v.name ?? "undefined"}"`
       );

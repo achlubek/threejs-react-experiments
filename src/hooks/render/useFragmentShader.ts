@@ -2,27 +2,26 @@ import { useMemo } from "react";
 
 import * as THREE from "three";
 
-import useCanvasRenderer, {
-  CanvasOnDrawParams,
-  CanvasRenderer,
-  UseCanvasRendererPropsBase,
-} from "@app/hooks/render/useCanvasRenderer";
-import { useScene } from "@app/hooks/util/useScene";
+import { useScene } from "@app/hooks/render/useScene";
 
-export interface FragmentShaderViewProps<
+export interface FragmentShaderProps<
   UniType extends Record<string, THREE.IUniform>
-> extends UseCanvasRendererPropsBase {
-  onDraw?: ((params: CanvasOnDrawParams) => UniType) | undefined;
+> {
   fragmentShader: string;
   uniforms?: UniType | undefined;
 }
 
-export default function useFragmentShaderView<
+export default function useFragmentShader<
   UniType extends Record<string, THREE.IUniform>
->(props: FragmentShaderViewProps<UniType>): CanvasRenderer {
+>(
+  props: FragmentShaderProps<UniType>
+): {
+  scene: THREE.Scene;
+  camera: THREE.Camera;
+  setUniforms: (unis: UniType) => void;
+} {
   const vertexShader = `
     varying vec2 UV;
-
     void main() {
         UV = uv;
         gl_Position = vec4(position, 1.0);
@@ -52,23 +51,14 @@ export default function useFragmentShaderView<
     s.add(quad);
   });
 
-  const onDraw = (params: CanvasOnDrawParams): void => {
-    if (props.onDraw) {
-      mat.uniforms = props.onDraw(params);
-    }
-  };
-
   const camera = useMemo(
     () => new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10.0),
     []
   );
 
-  return useCanvasRenderer({
-    ...props,
-    elementClassName: props.elementClassName,
+  return {
     scene,
     camera,
-    onDraw,
-    toneMapping: THREE.NoToneMapping,
-  });
+    setUniforms: (unis: UniType) => (mat.uniforms = unis),
+  };
 }

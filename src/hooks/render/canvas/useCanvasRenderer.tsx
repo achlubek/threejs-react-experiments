@@ -53,7 +53,7 @@ export interface UseCanvasRendererEvents {
 
 export interface UseCanvasRendererPropsBase extends UseCanvasRendererEvents {
   elementClassName?: string | undefined;
-  renderer: THREE.WebGLRenderer | null;
+  renderer: THREE.WebGLRenderer;
 }
 
 export interface UseCanvasRendererProps extends UseCanvasRendererPropsBase {
@@ -78,7 +78,7 @@ export default function useCanvasRenderer(
   const raycaster = useMemo(() => new THREE.Raycaster(), []);
 
   useEffect(() => {
-    if (overlayRef.current && props.renderer) {
+    if (overlayRef.current) {
       const threeRenderer = props.renderer;
       threeRenderer.setSize(
         overlayRef.current.clientWidth,
@@ -99,15 +99,12 @@ export default function useCanvasRenderer(
     clientX: number,
     clientY: number
   ): CanvasRendererPosition => {
-    if (props.renderer) {
-      const bbox = props.renderer.domElement.getBoundingClientRect();
-      const xAbs = clientX - bbox.left;
-      const yAbs = clientY - bbox.top;
-      const xNorm = xAbs / bbox.width;
-      const yNorm = yAbs / bbox.height;
-      return { x: xNorm, y: yNorm };
-    }
-    return { x: 0, y: 0 };
+    const bbox = props.renderer.domElement.getBoundingClientRect();
+    const xAbs = clientX - bbox.left;
+    const yAbs = clientY - bbox.top;
+    const xNorm = xAbs / bbox.width;
+    const yNorm = yAbs / bbox.height;
+    return { x: xNorm, y: yNorm };
   };
 
   const calculateNDCMouseCoords = (
@@ -187,48 +184,48 @@ export default function useCanvasRenderer(
 
   useEffect(() => {
     let disposed = false;
-    if (props.renderer) {
-      const renderLoop = (): void => {
-        let size = new Vector2(0, 0);
-        if (props.renderer) {
-          size = props.renderer.getSize(size);
-          if (
-            overlayRef.current &&
-            (size.x !== overlayRef.current.clientWidth ||
-              size.y !== overlayRef.current.clientHeight)
-          ) {
-            props.renderer.setSize(
-              overlayRef.current.clientWidth,
-              overlayRef.current.clientHeight
-            );
-            if (props.onResize) {
-              props.onResize(
-                overlayRef.current.clientWidth,
-                overlayRef.current.clientHeight
-              );
-            }
-          }
-          if (props.onDraw) {
-            props.onDraw({
-              canvasRenderer,
-              width: size.x,
-              height: size.y,
-            });
-          }
-          renderToTarget({
-            renderer: props.renderer,
-            camera: props.camera,
-            scene: props.scene,
-            toneMapping: props.toneMapping,
-            target: null,
-          });
+    const renderLoop = (): void => {
+      let size = new Vector2(0, 0);
+      size = props.renderer.getSize(size);
+      if (
+        overlayRef.current &&
+        (size.x !== overlayRef.current.clientWidth ||
+          size.y !== overlayRef.current.clientHeight)
+      ) {
+        props.renderer.setSize(
+          overlayRef.current.clientWidth,
+          overlayRef.current.clientHeight
+        );
+        if (props.onResize) {
+          props.onResize(
+            overlayRef.current.clientWidth,
+            overlayRef.current.clientHeight
+          );
         }
-        if (!disposed) {
-          requestAnimationFrame(() => renderLoop());
-        }
-      };
-      requestAnimationFrame(() => renderLoop());
-    }
+      }
+
+      if (props.onDraw) {
+        props.onDraw({
+          canvasRenderer,
+          width: size.x,
+          height: size.y,
+        });
+      }
+
+      renderToTarget({
+        renderer: props.renderer,
+        camera: props.camera,
+        scene: props.scene,
+        toneMapping: props.toneMapping,
+        target: null,
+      });
+
+      if (!disposed) {
+        requestAnimationFrame(() => renderLoop());
+      }
+    };
+    requestAnimationFrame(() => renderLoop());
+
     return () => {
       disposed = true;
     };

@@ -1,12 +1,10 @@
-import { ReactElement, useEffect, useMemo } from "react";
+import { ReactElement, useMemo } from "react";
 
-import * as THREE from "three";
-
-import { BufferOnDrawParams } from "@app/hooks/render/useBufferRenderer";
-import { CanvasOnDrawParams } from "@app/hooks/render/useCanvasRenderer";
+import { BufferOnDrawParams } from "@app/hooks/render/buffer/useBufferRenderer";
+import useFragmentShaderBuffer from "@app/hooks/render/buffer/useFragmentShaderBuffer";
+import { CanvasOnDrawParams } from "@app/hooks/render/canvas/useCanvasRenderer";
+import useFragmentShaderView from "@app/hooks/render/canvas/useFragmentShaderView";
 import useRenderer from "@app/hooks/render/useRenderer";
-import useFragmentShaderBuffer from "@app/hooks/util/useFragmentShaderBuffer";
-import useFragmentShaderView from "@app/hooks/util/useFragmentShaderView";
 
 export interface SimpleBoxFSProps {
   className?: string | undefined;
@@ -44,12 +42,14 @@ export default function SimpleBoxFS(props: SimpleBoxFSProps): ReactElement {
       varying vec2 UV;
       uniform float time;
       uniform float buttons;
+
       void main() {
-        gl_FragColor = vec4(UV.x, sin(UV.y * (10.0 + buttons * 10.0) + time), 1.0, 1.0);
+        vec3 now = vec3(UV.x, step(0.5, sin(UV.y * (10.0 + buttons * 10.0) + time)), 1.0);
+        gl_FragColor = vec4(now, 1.0);
       }`,
     height: 32,
     width: 32,
-    renderer: renderer.renderer,
+    renderer,
     onDraw: onDrawBuffer,
     uniforms: uniformsBuffer,
   });
@@ -58,28 +58,22 @@ export default function SimpleBoxFS(props: SimpleBoxFSProps): ReactElement {
     () => ({
       colorMultiplier: { value: 0.7 },
       desiredColorMultiplier: { value: 0.7 },
-      tex0: { value: new THREE.Texture() },
+      tex0: { value: bufferRenderer.texture.texture },
     }),
     []
   );
-
-  useEffect(() => {
-    console.log("Setting buffer renderer");
-    if (bufferRenderer.texture) {
-      uniforms.tex0.value = bufferRenderer.texture.texture;
-    }
-  }, [bufferRenderer.texture]);
 
   const onDraw = (_params: CanvasOnDrawParams): typeof uniforms => {
     uniforms.colorMultiplier.value =
       uniforms.colorMultiplier.value * 0.8 +
       uniforms.desiredColorMultiplier.value * 0.2;
+
     bufferRenderer.render();
     return uniforms;
   };
 
   const fragmentShaderView = useFragmentShaderView({
-    renderer: renderer.renderer,
+    renderer,
     uniforms,
     onDraw,
     fragmentShader: shader,
