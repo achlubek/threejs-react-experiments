@@ -3,8 +3,8 @@ import { ReactElement, useMemo } from "react";
 import { ACESFilmicToneMapping, Clock, Vector2 } from "three";
 
 import useManualRenderTargetRenderer from "@app/hooks/render/buffer/useManualRenderTargetRenderer";
-import useCanvasRenderer from "@app/hooks/render/canvas/useCanvasRenderer";
-import useFragmentShader from "@app/hooks/render/useFragmentShader";
+import useCanvas from "@app/hooks/render/canvas/useCanvas";
+import useFullScreenShaderPassArrangement from "@app/hooks/render/useFullScreenShaderPassArrangement";
 import useRenderLoop from "@app/hooks/render/useRenderLoop";
 import useRenderer from "@app/hooks/render/useRenderer";
 
@@ -37,37 +37,33 @@ export default function TestFS(props: TestFSProps): ReactElement {
 
   const renderer = useRenderer();
 
-  const { scene, camera, setUniforms } = useFragmentShader({
+  const { scene, camera, setUniforms } = useFullScreenShaderPassArrangement({
     uniforms,
     fragmentShader: shader,
   });
+  const bufferRenderer = useManualRenderTargetRenderer({
+    renderer,
+  });
 
-  const onDraw = (): void => {
+  const canvas = useCanvas({
+    renderer,
+    elementClassName: props.className,
+  });
+
+  useRenderLoop(() => {
     uniforms.time.value = clock.getElapsedTime();
     const canvasSize = renderer.getSize(new Vector2());
     uniforms.resolution.value = new Vector2(canvasSize.x, canvasSize.y);
     uniforms.ratio.value = canvasSize.x / canvasSize.y;
     setUniforms(uniforms);
-  };
 
-  const bufferRenderer = useManualRenderTargetRenderer({
-    renderer,
-  });
-
-  const view = useCanvasRenderer({
-    renderer,
-    onDraw,
-    elementClassName: props.className,
-    bufferRenderer,
-  });
-
-  useRenderLoop(() => {
-    view.render({
+    bufferRenderer.render({
       scene,
       camera,
       toneMapping: ACESFilmicToneMapping,
+      target: null,
     });
   });
 
-  return view.element;
+  return canvas.element;
 }

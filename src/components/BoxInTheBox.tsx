@@ -14,7 +14,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 import bumpMap from "@app/assets/bumpmap.jpg";
 import useManualRenderTargetRenderer from "@app/hooks/render/buffer/useManualRenderTargetRenderer";
-import useCanvasRenderer from "@app/hooks/render/canvas/useCanvasRenderer";
+import useCanvas from "@app/hooks/render/canvas/useCanvas";
 import useRenderLoop from "@app/hooks/render/useRenderLoop";
 import useRenderer from "@app/hooks/render/useRenderer";
 import { useScene } from "@app/hooks/render/useScene";
@@ -78,20 +78,19 @@ export default function BoxInTheBox(props: BoxInTheBoxProps): ReactElement {
     return c;
   }, []);
 
-  const view = useCanvasRenderer({
+  const canvas = useCanvas({
     renderer,
     elementClassName: props.className,
-    bufferRenderer,
     onResize: () => {
-      if (view.overlayRef.current) {
-        updateCameraAspectRatio(camera, view.overlayRef.current);
+      if (canvas.overlayRef.current) {
+        updateCameraAspectRatio(camera, canvas.overlayRef.current);
       }
     },
     elementProps: {
       onMouseMove: (e) => {
         const boxMesh = scene.getObjectByName("BoxMesh") as Mesh;
         const material = boxMesh.material as MeshPhysicalMaterial;
-        const raycast = view.raycast(camera, scene, e.clientX, e.clientY);
+        const raycast = canvas.raycast(camera, scene, e.clientX, e.clientY);
         if (
           raycast.intersections.map((a) => a.object.name).includes("BoxMesh")
         ) {
@@ -113,47 +112,33 @@ export default function BoxInTheBox(props: BoxInTheBoxProps): ReactElement {
   );
 
   useEffect(() => {
-    if (view.overlayRef.current) {
-      const con = new OrbitControls(camera, view.overlayRef.current);
+    if (canvas.overlayRef.current) {
+      const con = new OrbitControls(camera, canvas.overlayRef.current);
       con.enableRotate = true;
       con.enablePan = false;
       con.enableZoom = false;
       setOrbitControls(con);
     }
-  }, [view.overlayRef.current === null]);
+  }, [canvas.overlayRef.current === null]);
 
   const clock = useMemo(() => new Clock(), []);
 
   useRenderLoop(() => {
     scene.getObjectByName("BoxMesh")?.rotateZ(clock.getDelta() * 0.63);
     orbitControls?.update();
-    view.render({
+    bufferRenderer.render({
       scene,
       camera,
       toneMapping: ACESFilmicToneMapping,
+      target: null,
     });
-  }, [orbitControls, camera, view, view.overlayRef, view.overlayRef.current]);
+  }, [
+    orbitControls,
+    camera,
+    canvas,
+    canvas.overlayRef,
+    canvas.overlayRef.current,
+  ]);
 
-  //
-  // const orbitCameraView = useOrbitCameraView({
-  //   renderer,
-  //   elementClassName: props.className,
-  //   scene,
-  //   onDraw,
-  //   onMouseDown: (event: CanvasRendererMouseEventParams): void => {
-  //     // eslint-disable-next-line no-console
-  //     console.log(event);
-  //   },
-  //   onMouseMove: (event: CanvasRendererMouseEventParams) => {
-  //     const boxMesh = scene.getObjectByName("BoxMesh") as Mesh;
-  //     const material = boxMesh.material as MeshPhysicalMaterial;
-  //     if (event.intersects.map((a) => a.object.name).includes("BoxMesh")) {
-  //       material.color = new THREE.Color("white");
-  //     } else {
-  //       material.color = new THREE.Color(props.color);
-  //     }
-  //   },
-  // });
-
-  return view.element;
+  return canvas.element;
 }

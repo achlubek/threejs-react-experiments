@@ -3,30 +3,17 @@ import React, { ReactElement, useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { Vector2, Vector3 } from "three";
 
-import { BackBufferRenderer } from "@app/hooks/render/buffer/useBackBufferRenderer";
-import useManualRenderTargetRenderer, {
-  BufferRenderer,
-} from "@app/hooks/render/buffer/useManualRenderTargetRenderer";
-
-interface CanvasRendererPosition {
+interface CanvasPosition {
   x: number;
   y: number;
 }
 
-export interface CanvasRendererRenderCallParams {
-  camera: THREE.Camera;
-  scene: THREE.Scene;
-  toneMapping?: THREE.ToneMapping | undefined;
-}
-
-export interface UseCanvasRendererEvents {
-  onDraw?: (() => void) | undefined;
+export interface UseCanvasEvents {
   onResize?: ((width: number, height: number) => void) | undefined;
 }
 
-export interface UseCanvasRendererProps extends UseCanvasRendererEvents {
+export interface UseCanvasProps extends UseCanvasEvents {
   elementClassName?: string | undefined;
-  bufferRenderer: BufferRenderer | BackBufferRenderer;
   renderer: THREE.WebGLRenderer;
   elementProps?:
     | React.DetailedHTMLProps<
@@ -36,8 +23,8 @@ export interface UseCanvasRendererProps extends UseCanvasRendererEvents {
     | undefined;
 }
 
-export interface CanvasRenderer {
-  render: (params: CanvasRendererRenderCallParams) => void;
+export interface Canvas {
+  update: () => void;
   element: ReactElement;
   overlayRef: React.MutableRefObject<HTMLDivElement | null>;
   raycast: (
@@ -48,9 +35,7 @@ export interface CanvasRenderer {
   ) => { direction: Vector3; intersections: THREE.Intersection[] };
 }
 
-export default function useCanvasRenderer(
-  props: UseCanvasRendererProps
-): CanvasRenderer {
+export default function useCanvas(props: UseCanvasProps): Canvas {
   const overlayRef = useRef<HTMLDivElement | null>(null);
   const raycaster = useMemo(() => new THREE.Raycaster(), []);
 
@@ -74,7 +59,7 @@ export default function useCanvasRenderer(
   const calculateNormalizedMouseCoords = (
     clientX: number,
     clientY: number
-  ): CanvasRendererPosition => {
+  ): CanvasPosition => {
     const bbox = props.renderer.domElement.getBoundingClientRect();
     const xAbs = clientX - bbox.left;
     const yAbs = clientY - bbox.top;
@@ -84,7 +69,7 @@ export default function useCanvasRenderer(
   };
 
   const calculateNDCMouseCoords = (
-    normalized: CanvasRendererPosition
+    normalized: CanvasPosition
   ): THREE.Vector2 => {
     const xSnorm = normalized.x * 2 - 1;
     const ySnorm = -normalized.y * 2 + 1;
@@ -116,11 +101,7 @@ export default function useCanvasRenderer(
     />
   );
 
-  const bufferRenderer = useManualRenderTargetRenderer({
-    ...props,
-  });
-
-  const onDraw = (): void => {
+  const update = (): void => {
     let size = new Vector2(0, 0);
     size = props.renderer.getSize(size);
     if (
@@ -139,19 +120,7 @@ export default function useCanvasRenderer(
         );
       }
     }
-
-    if (props.onDraw) {
-      props.onDraw();
-    }
   };
 
-  const render = (params: CanvasRendererRenderCallParams): void => {
-    onDraw();
-    bufferRenderer.render({
-      ...params,
-      target: null,
-    });
-  };
-
-  return { render, raycast, element, overlayRef };
+  return { update, raycast, element, overlayRef };
 }

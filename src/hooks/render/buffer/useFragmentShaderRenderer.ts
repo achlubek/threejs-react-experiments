@@ -3,15 +3,14 @@ import { NoToneMapping, Vector4 } from "three";
 
 import { BackBufferRenderer } from "@app/hooks/render/buffer/useBackBufferRenderer";
 import { BufferRenderer } from "@app/hooks/render/buffer/useManualRenderTargetRenderer";
-import { CanvasRenderer } from "@app/hooks/render/canvas/useCanvasRenderer";
-import useFragmentShader, {
+import useFullScreenShaderPassArrangement, {
   FragmentShaderProps,
-} from "@app/hooks/render/useFragmentShader";
+} from "@app/hooks/render/useFullScreenShaderPassArrangement";
 
 export interface FragmentShaderBufferProps<
   UniType extends Record<string, THREE.IUniform>
 > extends FragmentShaderProps<UniType> {
-  bufferRenderer: BufferRenderer | BackBufferRenderer | CanvasRenderer;
+  bufferRenderer: BufferRenderer | BackBufferRenderer;
   onDraw?: (() => UniType | null) | undefined;
 }
 
@@ -27,7 +26,8 @@ export interface FragmentShaderRenderer {
 export default function useFragmentShaderRenderer<
   UniType extends Record<string, THREE.IUniform>
 >(props: FragmentShaderBufferProps<UniType>): FragmentShaderRenderer {
-  const { scene, camera, setUniforms } = useFragmentShader(props);
+  const { scene, camera, setUniforms } =
+    useFullScreenShaderPassArrangement(props);
 
   const onDraw = (): void => {
     if (props.onDraw) {

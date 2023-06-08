@@ -4,7 +4,7 @@ import * as THREE from "three";
 
 import useFragmentShaderRenderer from "@app/hooks/render/buffer/useFragmentShaderRenderer";
 import useManualRenderTargetRenderer from "@app/hooks/render/buffer/useManualRenderTargetRenderer";
-import useCanvasRenderer from "@app/hooks/render/canvas/useCanvasRenderer";
+import useCanvas from "@app/hooks/render/canvas/useCanvas";
 import useRenderLoop from "@app/hooks/render/useRenderLoop";
 import useRenderer from "@app/hooks/render/useRenderer";
 
@@ -16,12 +16,12 @@ export default function CombinationPipelineTest(
 ): ReactElement {
   const renderer = useRenderer();
 
-  const texA = new THREE.WebGLRenderTarget(32, 32, {
+  const tex1 = new THREE.WebGLRenderTarget(32, 32, {
     minFilter: THREE.LinearFilter,
     magFilter: THREE.LinearFilter,
   });
 
-  const texB = new THREE.WebGLRenderTarget(32, 32, {
+  const tex2 = new THREE.WebGLRenderTarget(32, 32, {
     minFilter: THREE.LinearFilter,
     magFilter: THREE.LinearFilter,
   });
@@ -43,7 +43,7 @@ export default function CombinationPipelineTest(
     bufferRenderer,
     uniforms: {
       prev: {
-        value: texA,
+        value: tex1,
       },
     },
   });
@@ -56,15 +56,9 @@ export default function CombinationPipelineTest(
     bufferRenderer,
     uniforms: {
       prev: {
-        value: texB,
+        value: tex2,
       },
     },
-  });
-
-  const view = useCanvasRenderer({
-    renderer,
-    elementClassName: props.className,
-    bufferRenderer,
   });
 
   const stageA = useFragmentShaderRenderer({
@@ -72,40 +66,34 @@ export default function CombinationPipelineTest(
     varying vec2 UV;
     uniform sampler2D prev;
     void main() { gl_FragColor = vec4(texture(prev, UV).rgb, 1.0); }`,
-    bufferRenderer: view,
+    bufferRenderer,
     uniforms: {
       prev: {
-        value: texA,
+        value: tex1,
       },
-    },
-    onDraw: () => {
-      stageR.render({
-        target: texA,
-      });
-      stageG.render({
-        target: texB,
-      });
-      stageB.render({
-        target: texA,
-      });
-      return null;
     },
   });
 
+  const canvas = useCanvas({
+    renderer,
+    elementClassName: props.className,
+  });
+
   useRenderLoop(() => {
+    canvas.update();
     stageR.render({
-      target: texA,
+      target: tex1,
     });
     stageG.render({
-      target: texB,
+      target: tex2,
     });
     stageB.render({
-      target: texA,
+      target: tex1,
     });
     stageA.render({
       target: null,
     });
   });
 
-  return view.element;
+  return canvas.element;
 }

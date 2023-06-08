@@ -11,7 +11,7 @@ export interface FragmentShaderProps<
   uniforms?: UniType | undefined;
 }
 
-export default function useFragmentShader<
+export default function useFullScreenShaderPassArrangement<
   UniType extends Record<string, THREE.IUniform>
 >(
   props: FragmentShaderProps<UniType>
