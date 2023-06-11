@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 
 import * as THREE from "three";
 
@@ -28,22 +28,36 @@ export default function useFullScreenShaderPassHelper<
     }
   `;
 
-  const mat = useMemo(
+  const getMaterial = (
+    fragmentShader: string,
+    uniforms: UniType | undefined
+  ): THREE.ShaderMaterial =>
+    new THREE.ShaderMaterial({
+      uniforms: uniforms ?? {},
+      vertexShader,
+      fragmentShader: fragmentShader,
+      depthWrite: false,
+      depthTest: false,
+      blendEquationAlpha: THREE.NoBlending,
+      transparent: true,
+    });
+
+  const mesh = useMemo(
     () =>
-      new THREE.ShaderMaterial({
-        uniforms: props.uniforms ?? {},
-        vertexShader,
-        fragmentShader: props.fragmentShader,
-        depthWrite: false,
-        depthTest: false,
-        blendEquationAlpha: THREE.NoBlending,
-        transparent: true,
-      }),
+      new THREE.Mesh(
+        new THREE.PlaneGeometry(2, 2),
+        getMaterial(props.fragmentShader, props.uniforms)
+      ),
     []
   );
 
+  useEffect(() => {
+    mesh.material.dispose();
+    mesh.material = getMaterial(props.fragmentShader, props.uniforms);
+  }, [props.fragmentShader, props.uniforms]);
+
   const scene = useScene((s: THREE.Scene) => {
-    s.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat));
+    s.add(mesh);
   });
 
   const camera = useMemo(
@@ -54,6 +68,6 @@ export default function useFullScreenShaderPassHelper<
   return {
     scene,
     camera,
-    setUniforms: (unis: UniType) => (mat.uniforms = unis),
+    setUniforms: (unis: UniType) => (mesh.material.uniforms = unis),
   };
 }

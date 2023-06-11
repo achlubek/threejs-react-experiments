@@ -118,7 +118,11 @@ export default function useCanvas(props: UseCanvasProps): Canvas {
       {...props.elementProps}
       ref={overlayRef}
       className={props.elementClassName}
-      style={{ overflow: "hidden", position: "relative" }}
+      style={{
+        overflow: "hidden",
+        position: "relative",
+        ...props.elementProps?.style,
+      }}
     />
   );
 

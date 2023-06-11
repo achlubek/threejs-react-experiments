@@ -36,14 +36,13 @@ export default function useBackBufferHelper(
         magFilter: THREE.LinearFilter,
       }),
     ],
-    []
+    [props.width, props.height]
   );
 
   const currentState = {
     target: 0,
     back: 1,
   };
-
   const getTarget = (): THREE.WebGLRenderTarget =>
     textures[currentState.target];
 
@@ -60,7 +59,7 @@ export default function useBackBufferHelper(
       textures[0].dispose();
       textures[1].dispose();
     };
-  }, []);
+  }, [props.width, props.height]);
 
   return { getTarget, getBackBuffer, toggleState };
 }
